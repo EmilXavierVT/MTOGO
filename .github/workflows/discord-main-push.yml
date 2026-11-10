@@ -1,0 +1,75 @@
+name: Notify Discord on main push
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  notify:
+    name: Discord notification
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Send push notification
+        env:
+          # Store the webhook URL in the repository's Actions secrets.
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from urllib.error import HTTPError, URLError
+          from urllib.request import Request, urlopen
+
+          event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+          if event.get("ref") != "refs/heads/main" or event.get("deleted"):
+              print("No main-branch update to notify.")
+              raise SystemExit(0)
+
+          webhook = os.environ.get("DISCORD_WEBHOOK_URL", "")
+          if not webhook:
+              raise SystemExit("Missing DISCORD_WEBHOOK_URL repository secret.")
+
+          repository = os.environ["GITHUB_REPOSITORY"]
+          actor = os.environ["GITHUB_ACTOR"]
+          sha = event.get("after") or os.environ["GITHUB_SHA"]
+          server = os.environ["GITHUB_SERVER_URL"]
+          commit_url = f"{server}/{repository}/commit/{sha}"
+          commit = event.get("head_commit") or {}
+          lines = (commit.get("message") or "No commit summary.").splitlines()
+          summary = lines[0][:500] if lines else "No commit summary."
+          payload = {
+              "allowed_mentions": {"parse": []},
+              "embeds": [{
+                  "title": f"Push to main - {repository}"[:256],
+                  "url": event.get("compare") or commit_url,
+                  "description": (
+                      f"**{actor}** pushed to `main`.\n\n"
+                      f"[`{sha[:7]}`]({commit_url}) {summary}"
+                  ),
+                  "color": 5814783,
+              }],
+          }
+          separator = "&" if "?" in webhook else "?"
+          request = Request(
+              webhook + separator + "wait=true",
+              data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "MTOGO-GitHub-Actions",
+              },
+              method="POST",
+          )
+          try:
+              with urlopen(request, timeout=15) as response:
+                  message = json.load(response)
+          except HTTPError as error:
+              raise SystemExit(f"Discord rejected the notification (HTTP {error.code}).") from None
+          except (URLError, TimeoutError):
+              raise SystemExit("Could not reach the Discord webhook.") from None
+          print(f"Discord notification sent. Message ID: {message['id']}")
+          PY
