@@ -25,5 +25,10 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Build and run tests
-        run: mvn --batch-mode clean verify
+      - name: Run tests and quality gates
+        run: |
+          mvn --batch-mode --no-transfer-progress clean verify
+          test -s target/site/jacoco/jacoco.xml || {
+            echo "::error::JaCoCo coverage report is missing"
+            exit 1
+          }
