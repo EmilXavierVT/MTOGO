@@ -1,0 +1,47 @@
+name: mtogo
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mtogo
+      POSTGRES_USER: mtogo
+      POSTGRES_PASSWORD: "${MTOGO_DB_PASSWORD:?Set MTOGO_DB_PASSWORD in .env}"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  backend:
+    image: emilxvt/mtogo:latest
+    build: "https://github.com/EmilXavierVT/MTOGO.git#main"
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DEPLOYED: "true"
+      DB_NAME: mtogo
+      DB_USERNAME: mtogo
+      DB_PASSWORD: "${MTOGO_DB_PASSWORD:?Set MTOGO_DB_PASSWORD in .env}"
+      CONNECTION_STR: jdbc:postgresql://db:5432/
+      # The JPA setting overrides the app's development schema reset.
+      JAVA_TOOL_OPTIONS: -Djakarta.persistence.schema-generation.database.action=update
+    ports:
+      - "${MTOGO_BIND_IP:-0.0.0.0}:${MTOGO_BACKEND_PORT:-7072}:7072"
+
+  frontend:
+    image: emilxvt/mtogo-front:latest
+    build: "https://github.com/EmilXavierVT/MTOGO-Front.git#main"
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - "${MTOGO_BIND_IP:-0.0.0.0}:${MTOGO_FRONTEND_PORT:-3000}:3000"
+
+volumes:
+  postgres-data:
