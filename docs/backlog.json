@@ -1,0 +1,769 @@
+{
+  "approved": "2026-11-10",
+  "estimate_unit": "person-hours",
+  "capacity_hours": 180,
+  "items": [
+    {
+      "code": "B01",
+      "title": "Afklar hosting og adgang til demomiljø",
+      "week": 1,
+      "estimate_hours": 2,
+      "type": "decision",
+      "priority": "P0",
+      "dependencies": [],
+      "goal": "Vælg det konkrete mål for den aftalte Docker Compose-løsning.",
+      "acceptance": [
+        "Teamets valgte Linux-server/VM eller aftalte alternativ er dokumenteret med ansvarlig for adgang.",
+        "Forudsætninger for netværk, deployment og vedvarende data er afklaret; ingen udgifter eller hemmeligheder antages eller publiceres.",
+        "Et manglende mål markeres som blokering for deployment, ikke som en gennemført opsætning."
+      ],
+      "issue_number": 31,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/31"
+    },
+    {
+      "code": "B02",
+      "title": "Aftal arbejdsfordeling og fælles pull-politik",
+      "week": 1,
+      "estimate_hours": 2,
+      "type": "decision",
+      "priority": "P0",
+      "dependencies": [],
+      "goal": "Gør teamets arbejdsform konkret uden at antage faste makkerpar.",
+      "acceptance": [
+        "Alle fire har aftalt samarbejdsform, reviewansvar og hvordan ansvar vælges ved pull.",
+        "WIP 2 i In progress og 1 i Review samt politik for blokeringer er forstået.",
+        "Aftalen, mødetid for ugentligt flow review og faktisk startdato dokumenteres."
+      ],
+      "issue_number": 32,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/32"
+    },
+    {
+      "code": "B03",
+      "title": "Etabler fælles backend- og React-byggemiljø",
+      "week": 1,
+      "estimate_hours": 3,
+      "type": "foundation",
+      "priority": "P0",
+      "dependencies": [],
+      "goal": "Giv alle samme reproducerbare udgangspunkt med den aftalte stack.",
+      "acceptance": [
+        "Eksisterende Java-skelet bevares, og Javalin/Hibernate/PostgreSQL samt React kan bygges med dokumenterede kommandoer.",
+        "JDK, Node og buildværktøj er ensrettet mellem udvikling og planlagt CI; versionsvalg er begrundet.",
+        "Frontend kan kalde en ufølsom health-rute; konfiguration indeholder ingen hemmeligheder."
+      ],
+      "issue_number": 33,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/33"
+    },
+    {
+      "code": "B04",
+      "title": "Etabler PostgreSQL-konfiguration og første datamodel",
+      "week": 1,
+      "estimate_hours": 3,
+      "type": "foundation",
+      "priority": "P0",
+      "dependencies": [
+        "B03"
+      ],
+      "goal": "Understøt konti, restauranter, menuer, ordrer, leveringer og økonomi med Hibernate.",
+      "acceptance": [
+        "Relationer og ejerskab for én rolle pr. konto og én restaurant pr. restaurantkonto er dokumenteret.",
+        "Databasen kan oprettes gentageligt fra et tomt miljø; startdata holdes adskilt fra brugerdata.",
+        "Ordresnapshots, leveringstildeling og entydige økonomiposteringer har en dokumenteret datamodel."
+      ],
+      "issue_number": 34,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/34"
+    },
+    {
+      "code": "B05",
+      "title": "Automatiser build og tests i GitHub Actions",
+      "week": 1,
+      "estimate_hours": 3,
+      "type": "foundation",
+      "priority": "P0",
+      "dependencies": [
+        "B03"
+      ],
+      "goal": "Kontroller små ændringer automatisk før integration.",
+      "acceptance": [
+        "PR-checks bygger backend/frontend og kører relevante automatiske tests.",
+        "En bevidst fejl giver et fejlet check, og en rettelse giver grønt resultat.",
+        "Kommandoer og CI-resultater er linked; et tomt testkatalog fremstilles ikke som testdækning."
+      ],
+      "issue_number": 35,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/35"
+    },
+    {
+      "code": "B06",
+      "title": "Tilføj lint, statisk analyse og coverage-rapporter",
+      "week": 1,
+      "estimate_hours": 3,
+      "type": "foundation",
+      "priority": "P0",
+      "dependencies": [
+        "B05"
+      ],
+      "goal": "Gør kvaliteten synlig uden at opfinde et ikke-aftalt coverage-mål.",
+      "acceptance": [
+        "React-lint og valgt Java-analyse kører i CI med dokumenteret konfiguration.",
+        "Coverage-rapport fra faktiske tests er tilgængelig som artifact/resultat.",
+        "Eventuelle gates og undtagelser er begrundet; ingen bestemt procent antages som et krav."
+      ],
+      "issue_number": 38,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/38"
+    },
+    {
+      "code": "B07",
+      "title": "Start backend, frontend og database med Docker Compose",
+      "week": 1,
+      "estimate_hours": 3,
+      "type": "foundation",
+      "priority": "P0",
+      "dependencies": [
+        "B03",
+        "B04"
+      ],
+      "goal": "Giv teamet en fælles startkommando.",
+      "acceptance": [
+        "En ren opstart giver backend, React-frontend og PostgreSQL med dokumenterede trin.",
+        "Databaseoplysninger kommer fra ekstern miljøkonfiguration; eksempelkonfiguration indeholder kun ufølsomme pladsholdere.",
+        "Databasedata overlever genstart af containere, og readiness/health kan kontrolleres."
+      ],
+      "issue_number": 39,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/39"
+    },
+    {
+      "code": "B08",
+      "title": "Etabler første gentagelige deployment til demomiljø",
+      "week": 1,
+      "estimate_hours": 3,
+      "type": "foundation",
+      "priority": "P0",
+      "dependencies": [
+        "B01",
+        "B05",
+        "B07"
+      ],
+      "goal": "Gør et kontrolleret inkrement tilgængeligt i det valgte demomiljø.",
+      "acceptance": [
+        "Det aftalte mål kan starte den samme Compose-løsning med miljøspecifik konfiguration.",
+        "Deploymenttrin, version og smoke check er dokumenteret og reproduceret.",
+        "Lagring og genudrulning er beskrevet; faktisk demo-URL registreres først, når den findes."
+      ],
+      "issue_number": 42,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/42"
+    },
+    {
+      "code": "B09",
+      "title": "Etabler manuelle, versionsmærkede releases",
+      "week": 1,
+      "estimate_hours": 4,
+      "type": "foundation",
+      "priority": "P0",
+      "dependencies": [
+        "B08"
+      ],
+      "goal": "Deploy præcis den version, der har bestået CI.",
+      "acceptance": [
+        "GitHub Actions kan manuelt deploye en verificeret release/tag efter bestået CI.",
+        "SemVer-praksis under 0.x og release-noter er dokumenteret.",
+        "Genudrulning af tidligere kodeversion er demonstreret, og databasekompatibilitet/datahåndtering er beskrevet uden automatisk antaget nedgradering."
+      ],
+      "issue_number": 45,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/45"
+    },
+    {
+      "code": "B10",
+      "title": "Opret realistiske startdata for roller, restauranter og menuer",
+      "week": 1,
+      "estimate_hours": 2,
+      "type": "foundation",
+      "priority": "P0",
+      "dependencies": [
+        "B04"
+      ],
+      "goal": "Gør alle roller og ejerskabsgrænser demonstrerbare.",
+      "acceptance": [
+        "Startdata omfatter kunde, restaurantejer, bud og admin samt mindst to restauranter og to bude til adgangs-/samtidighedstest.",
+        "Hver restaurantkonto er tilknyttet én restaurant; hver konto har præcis én rolle.",
+        "Startdata kan indlæses gentageligt; adgangskoder lagres ikke i klartekst eller som reelle credentials i repoet."
+      ],
+      "issue_number": 40,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/40"
+    },
+    {
+      "code": "B11",
+      "title": "Implementer login, registrering og backend-adgang",
+      "week": 1,
+      "estimate_hours": 4,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B04",
+        "B10"
+      ],
+      "goal": "Giv de fire roller fælles login og sikre ejerskabsgrænser.",
+      "acceptance": [
+        "Kunder kan registrere sig; øvrige roller oprettes gennem startdata.",
+        "Backend identificerer brugeren sikkert, beskytter credentials og afviser uvedkommende rolle/ejerskab.",
+        "Tests viser både tilladt adgang og afvist adgang til en anden kundes/restaurantens data; admin kan ikke ændre forretningsdata."
+      ],
+      "issue_number": 43,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/43"
+    },
+    {
+      "code": "B12",
+      "title": "Lav fælles login og rollebaseret navigation i React",
+      "week": 1,
+      "estimate_hours": 2,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B03",
+        "B11"
+      ],
+      "goal": "Gør de fire interfaces tilgængelige gennem samme webapp.",
+      "acceptance": [
+        "Kunden kan registrere sig og logge ind; øvrige startdatakonti kan logge ind.",
+        "Navigation følger rollen, og logout/forkert login håndteres tydeligt.",
+        "Backend er fortsat autoritet for adgang, også ved direkte API-kald."
+      ],
+      "issue_number": 46,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/46"
+    },
+    {
+      "code": "B13",
+      "title": "Implementer restaurantens menuadministration i API",
+      "week": 1,
+      "estimate_hours": 3,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B04",
+        "B11"
+      ],
+      "goal": "Lad ejeren vedligeholde sin egen menu.",
+      "acceptance": [
+        "Ejeren kan oprette og ændre retters navn, beskrivelse og pris samt markere dem utilgængelige.",
+        "Danske felter og valgfrie engelske felter gemmes med fælles pris/tilgængelighed; prisgrundlag og validering dokumenteres.",
+        "En anden restaurant eller en forkert rolle kan ikke redigere menuen; gamle ordrelinjer ændres ikke."
+      ],
+      "issue_number": 47,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/47"
+    },
+    {
+      "code": "B14",
+      "title": "Lav restaurantens menuredigering i React",
+      "week": 1,
+      "estimate_hours": 3,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B12",
+        "B13"
+      ],
+      "goal": "Giv restaurantejeren et anvendeligt menuinterface.",
+      "acceptance": [
+        "Ejeren kan oprette/redigere retter, pris og tilgængelighed samt tilføje engelsk navn/beskrivelse.",
+        "Valideringsfejl vises, og tomme valgfrie oversættelser accepteres.",
+        "Kun egen restaurant vises; billeder, tilvalg og kampagner indgår ikke."
+      ],
+      "issue_number": 49,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/49"
+    },
+    {
+      "code": "B15",
+      "title": "Vis restauranter, menuer og kurv til kunden",
+      "week": 1,
+      "estimate_hours": 3,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B12",
+        "B13"
+      ],
+      "goal": "Gør kunden klar til at bestille fra én restaurant.",
+      "acceptance": [
+        "Kunden kan vælge restaurant, se tilgængelige retter og ændre antal i kurven.",
+        "Kurven håndhæver én restaurant pr. ordre og viser prisgrundlag og total tydeligt.",
+        "Utilgængelige retter kan ikke nybestilles; eksisterende kurvdata skal stadig kontrolleres af checkout."
+      ],
+      "issue_number": 50,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/50"
+    },
+    {
+      "code": "B16",
+      "title": "Implementer lineær provisionsberegning med grænsetests",
+      "week": 1,
+      "estimate_hours": 2,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B03"
+      ],
+      "goal": "Beregn præcis den vedtagne dynamiske provision uden ekstra gebyr.",
+      "acceptance": [
+        "Satsen er 6 % til og med 100 kr., 19/300 - x/30000 mellem 100 og 1.000 kr. og 3 % fra 1.000 kr., på netbeløbet.",
+        "Decimalberegning og dokumenteret afrunding til øre bruges; satsen afrundes ikke tidligt.",
+        "Tests dækker 0, under/på/over 100 og 1.000, negative input samt 250→13,75; 950→30,08 og 1.000→30,00 kr."
+      ],
+      "issue_number": 36,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/36"
+    },
+    {
+      "code": "B17",
+      "title": "Implementer checkout med prisaccept, betaling og ordresnapshot",
+      "week": 1,
+      "estimate_hours": 4,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B11",
+        "B13",
+        "B16"
+      ],
+      "goal": "Opret en korrekt ordre efter godkendt lokal betalingssimulation.",
+      "acceptance": [
+        "Backend genkontrollerer restaurant, antal, priser og tilgængelighed; ændret total kræver ny kundeaccept.",
+        "Ordren gemmer varer/priser/antal, kundeoplysninger, netgrundlag og provision uafhængigt af senere ændringer.",
+        "Godkendt simulation giver Afventer restaurant; afvist betaling giver ingen betalt ordre. Ingen ekstern integration eller SMS bygges."
+      ],
+      "issue_number": 51,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/51"
+    },
+    {
+      "code": "B18",
+      "title": "Lav kundens checkout og ordrebekræftelse",
+      "week": 1,
+      "estimate_hours": 3,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B15",
+        "B17"
+      ],
+      "goal": "Lad kunden gennemføre den første bestilling.",
+      "acceptance": [
+        "Kunden angiver navn, telefon og leveringsadresse og ser totalen før betaling.",
+        "Opdateret pris skal accepteres eksplicit; utilgængelige retter og afvist simulation vises forståeligt.",
+        "Succes viser den oprettede ordre med restaurant og status, og genindlæsning ændrer ikke historikken."
+      ],
+      "issue_number": 52,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/52"
+    },
+    {
+      "code": "B19",
+      "title": "Implementer restaurantens ordreovergange og afvisning",
+      "week": 2,
+      "estimate_hours": 4,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B17"
+      ],
+      "goal": "Lad restauranten acceptere, afvise og klargøre ordrer.",
+      "acceptance": [
+        "Kun egen restaurant kan ændre Afventer restaurant til Accepteret/Afvist og Accepteret til Klar til afhentning.",
+        "Afvisning registrerer simuleret tilbagebetaling uden opkrævet provision eller optjent bonus.",
+        "Ugyldige overgange, uvedkommende og gentagne afslutningskald håndteres konsistent; relevant adfærd er testet."
+      ],
+      "issue_number": 53,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/53"
+    },
+    {
+      "code": "B20",
+      "title": "Vis og behandl restaurantens ordrer i React",
+      "week": 2,
+      "estimate_hours": 3,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B14",
+        "B19"
+      ],
+      "goal": "Giv ejeren et lille arbejdsinterface til ordreflowet.",
+      "acceptance": [
+        "Ejeren ser egne ordrer med varer og aktuel status.",
+        "Kun gyldige handlinger for accept, afvisning og klar til afhentning tilbydes.",
+        "Fejl og opdateret status vises; API-adgangsgrænser bevares."
+      ],
+      "issue_number": 54,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/54"
+    },
+    {
+      "code": "B21",
+      "title": "Implementer atomisk budtildeling og leveringsstatus",
+      "week": 2,
+      "estimate_hours": 4,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B19"
+      ],
+      "goal": "Fordel ledige leveringer sikkert og gennemfør dem i korrekt rækkefølge.",
+      "acceptance": [
+        "Bud kan overtage en ledig leveringsklar ordre; højst ét bud pr. ordre og én aktiv levering pr. bud.",
+        "Kun det tildelte bud markerer Afhentet og derefter Leveret med konsistente tidspunkter.",
+        "PostgreSQL-integrationstests viser konkurrerende overtagelser af samme ordre og to forskellige ordrer til samme bud."
+      ],
+      "issue_number": 55,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/55"
+    },
+    {
+      "code": "B22",
+      "title": "Lav buddets leveringsinterface",
+      "week": 2,
+      "estimate_hours": 3,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B12",
+        "B21"
+      ],
+      "goal": "Lad buddet vælge og gennemføre sin levering.",
+      "acceptance": [
+        "Buddet ser ledige leveringsklare ordrer og kan overtage én.",
+        "Egen aktive levering viser nødvendige kunde-/adresseoplysninger og gyldige afhentnings-/leveringshandlinger.",
+        "Konflikt ved samtidig overtagelse vises; kort og ruteplanlægning indgår ikke."
+      ],
+      "issue_number": 57,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/57"
+    },
+    {
+      "code": "B23",
+      "title": "Vis kundens egen ordrehistorik og status",
+      "week": 2,
+      "estimate_hours": 3,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B18",
+        "B19",
+        "B21"
+      ],
+      "goal": "Gør ordreflowet synligt for kunden i webappen.",
+      "acceptance": [
+        "Kunden kan se egne ordrelinjer, gemte beløb og aktuel status gennem hele forløbet.",
+        "Afvisning og simuleret tilbagebetaling vises tydeligt.",
+        "Senere pris-/menuændringer ændrer ikke historikken, og andre kunders ordrer er utilgængelige."
+      ],
+      "issue_number": 58,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/58"
+    },
+    {
+      "code": "B24",
+      "title": "Optjen bonus én gang ved gennemført levering",
+      "week": 2,
+      "estimate_hours": 2,
+      "type": "feature",
+      "priority": "P0",
+      "dependencies": [
+        "B16",
+        "B21"
+      ],
+      "goal": "Knyt bonus til den tildelte, gennemførte levering.",
+      "acceptance": [
+        "Bonus er 20 % af ordrenes afrundede provision, afrundet konsekvent til øre, og tilhører det tildelte bud.",
+        "Kun Leveret udløser optjening; afvisning eller uafsluttet levering giver ingen bonus.",
+        "Gentagne eller konkurrerende afslutningskald giver ikke dobbelt optjening; beregning adskilles fra faktisk lønudbetaling."
+      ],
+      "issue_number": 59,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/59"
+    },
+    {
+      "code": "B25",
+      "title": "Indsaml tre kundebedømmelser efter levering",
+      "week": 2,
+      "estimate_hours": 3,
+      "type": "feature",
+      "priority": "P1",
+      "dependencies": [
+        "B23"
+      ],
+      "goal": "Afslut kundeoplevelsen med den aftalte feedback.",
+      "acceptance": [
+        "Kunden på en leveret ordre kan én gang bedømme mad, samlet oplevelse og konkret bud med 1–5.",
+        "Backend afviser forkert kunde, for tidlig feedback, værdier uden for intervallet og dubletter.",
+        "En enkel React-form viser resultatet; feedback ændrer ikke bonus og kræver ikke kommentarer/moderation."
+      ],
+      "issue_number": 60,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/60"
+    },
+    {
+      "code": "B26",
+      "title": "Færdiggør dansk/engelsk UI og menu-fallback",
+      "week": 2,
+      "estimate_hours": 3,
+      "type": "feature",
+      "priority": "P1",
+      "dependencies": [
+        "B14",
+        "B18",
+        "B20",
+        "B22",
+        "B23"
+      ],
+      "goal": "Gør den samlede brugerrejse tilgængelig på begge sprog.",
+      "acceptance": [
+        "Faste webtekster er samlet og findes på dansk og engelsk med sprogvalg.",
+        "Restaurantens engelske navn/beskrivelse vises, når feltet findes; ellers vises dansk for det manglende felt.",
+        "Begge sprog bruger samme pris/tilgængelighed, og en komplet ordre kan demonstreres på begge."
+      ],
+      "issue_number": 61,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/61"
+    },
+    {
+      "code": "B27",
+      "title": "Lav adminoversigt med læseadgang til alle ordrer",
+      "week": 2,
+      "estimate_hours": 2,
+      "type": "feature",
+      "priority": "P1",
+      "dependencies": [
+        "B12",
+        "B23"
+      ],
+      "goal": "Giv admin den aftalte afgrænsede visning.",
+      "acceptance": [
+        "Admin ser alle ordrer og deres aktuelle status.",
+        "Backend afviser adgangen for andre roller og giver ikke admin nye ændringsrettigheder.",
+        "Konto-/rolleadministration og større ledelsesdashboard indgår ikke."
+      ],
+      "issue_number": 62,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/62"
+    },
+    {
+      "code": "B28",
+      "title": "Verificer adgang, historik og samtidighed på tværs af flowet",
+      "week": 2,
+      "estimate_hours": 6,
+      "type": "verification",
+      "priority": "P0",
+      "dependencies": [
+        "B14",
+        "B18",
+        "B20",
+        "B22",
+        "B23",
+        "B24"
+      ],
+      "goal": "Vis at det samlede ordreflow holder sine vigtigste regler.",
+      "acceptance": [
+        "En fuld kunde→restaurant→bud-rejse er verificeret med korrekt provision, bonus og gemte beløb.",
+        "Tests demonstrerer ejerskabsgrænser, ugyldige overgange, prisændringer, betalingsafvisning og restaurantafvisning.",
+        "Relevante PostgreSQL-tests dækker konkurrerende tildeling og entydig bonus; CI-evidens er linked."
+      ],
+      "issue_number": 63,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/63"
+    },
+    {
+      "code": "B29",
+      "title": "Beregn bidrag, omkostningsscenarier og break-even",
+      "week": 3,
+      "estimate_hours": 4,
+      "type": "verification",
+      "priority": "P0",
+      "dependencies": [
+        "B16",
+        "B24"
+      ],
+      "goal": "Vurder økonomien med ærlige og efterprøvelige antagelser.",
+      "acceptance": [
+        "Eksempler viser provision, bonus og resterende bidrag, herunder 100→6,00/1,20/4,80 kr.",
+        "Antagne faste og variable omkostninger er tydeligt markeret, og break-even samt følsomhed kan genberegnes.",
+        "Der konkluderes ikke økonomisk bæredygtighed alene ud fra 20 %-loftet; ingen antagelser fremstilles som faktiske virksomhedsdata."
+      ],
+      "issue_number": 64,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/64"
+    },
+    {
+      "code": "B30",
+      "title": "Etabler faktiske flowmålinger og evidenslog",
+      "week": 1,
+      "estimate_hours": 2,
+      "type": "process",
+      "priority": "P0",
+      "dependencies": [
+        "B02"
+      ],
+      "goal": "Mål processen fra første aktive opgave.",
+      "acceptance": [
+        "WIP, cycle time fra første In progress til Done inklusive review/blokering og ugentlig throughput har dokumenterede datakilder/enheder.",
+        "Start/Done udfyldes kun ved faktiske hændelser; præcise tidspunkter kan spores i historik/log.",
+        "Proces-/mødeopgaver rapporteres særskilt fra produktleverancer; ingen historiske resultater opfindes."
+      ],
+      "issue_number": 37,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/37"
+    },
+    {
+      "code": "B31",
+      "title": "Afhold flow review og dokumenter eksperiment – uge 1",
+      "week": 1,
+      "estimate_hours": 2,
+      "type": "process",
+      "priority": "P0",
+      "dependencies": [
+        "B30"
+      ],
+      "goal": "Gennemgå ugens faktiske flow og vælg en konkret forbedring.",
+      "acceptance": [
+        "30 minutters review med fire deltagere er afholdt; faktisk dato og deltagere registreres.",
+        "WIP, throughput, cycle times, ældste aktive arbejde og blokeringer er linked til faktisk evidens.",
+        "Ét eksperiment har forventning, måling, ansvarlig og opfølgning; tidligere eksperiment følges op, hvis det findes."
+      ],
+      "issue_number": 41,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/41"
+    },
+    {
+      "code": "B32",
+      "title": "Forbered og dokumenter ugens inkrement/demo – uge 1",
+      "week": 1,
+      "estimate_hours": 2,
+      "type": "process",
+      "priority": "P0",
+      "dependencies": [
+        "B06",
+        "B09",
+        "B14",
+        "B18"
+      ],
+      "goal": "Vis fungerende adfærd og dokumenteret proces ved vejledning.",
+      "acceptance": [
+        "Et faktisk fungerende inkrement og dets version kan demonstreres; mangler beskrives ærligt.",
+        "Board, flow review/eksperiment og CI-build/tests/statisk analyse/coverage vises med de tilgængelige faktiske resultater.",
+        "Release/demo-noter forklarer implementeret/udskudt scope og prioriteter; en plan alene markeres ikke som gennemført demo."
+      ],
+      "issue_number": 56,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/56"
+    },
+    {
+      "code": "B33",
+      "title": "Afhold flow review og dokumenter eksperiment – uge 2",
+      "week": 2,
+      "estimate_hours": 2,
+      "type": "process",
+      "priority": "P0",
+      "dependencies": [
+        "B30",
+        "B31"
+      ],
+      "goal": "Gennemgå ugens faktiske flow og vælg en konkret forbedring.",
+      "acceptance": [
+        "30 minutters review med fire deltagere er afholdt; faktisk dato og deltagere registreres.",
+        "WIP, throughput, cycle times, ældste aktive arbejde og blokeringer er linked til faktisk evidens.",
+        "Ét eksperiment har forventning, måling, ansvarlig og opfølgning; tidligere eksperiment følges op, hvis det findes."
+      ],
+      "issue_number": 44,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/44"
+    },
+    {
+      "code": "B34",
+      "title": "Forbered og dokumenter ugens inkrement/demo – uge 2",
+      "week": 2,
+      "estimate_hours": 2,
+      "type": "process",
+      "priority": "P0",
+      "dependencies": [
+        "B09",
+        "B20",
+        "B22",
+        "B23",
+        "B24"
+      ],
+      "goal": "Vis fungerende adfærd og dokumenteret proces ved vejledning.",
+      "acceptance": [
+        "Et faktisk fungerende inkrement og dets version kan demonstreres; mangler beskrives ærligt.",
+        "Board, flow review/eksperiment og CI-build/tests/statisk analyse/coverage vises med de tilgængelige faktiske resultater.",
+        "Release/demo-noter forklarer implementeret/udskudt scope og prioriteter; en plan alene markeres ikke som gennemført demo."
+      ],
+      "issue_number": 65,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/65"
+    },
+    {
+      "code": "B35",
+      "title": "Afhold flow review og dokumenter eksperiment – uge 3",
+      "week": 3,
+      "estimate_hours": 2,
+      "type": "process",
+      "priority": "P0",
+      "dependencies": [
+        "B30",
+        "B33"
+      ],
+      "goal": "Gennemgå ugens faktiske flow og vælg en konkret forbedring.",
+      "acceptance": [
+        "30 minutters review med fire deltagere er afholdt; faktisk dato og deltagere registreres.",
+        "WIP, throughput, cycle times, ældste aktive arbejde og blokeringer er linked til faktisk evidens.",
+        "Ét eksperiment har forventning, måling, ansvarlig og opfølgning; tidligere eksperiment følges op, hvis det findes."
+      ],
+      "issue_number": 48,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/48"
+    },
+    {
+      "code": "B36",
+      "title": "Forbered og dokumenter ugens inkrement/demo – uge 3",
+      "week": 3,
+      "estimate_hours": 2,
+      "type": "process",
+      "priority": "P0",
+      "dependencies": [
+        "B29",
+        "B37",
+        "B38"
+      ],
+      "goal": "Vis fungerende adfærd og dokumenteret proces ved vejledning.",
+      "acceptance": [
+        "Et faktisk fungerende inkrement og dets version kan demonstreres; mangler beskrives ærligt.",
+        "Board, flow review/eksperiment og CI-build/tests/statisk analyse/coverage vises med de tilgængelige faktiske resultater.",
+        "Release/demo-noter forklarer implementeret/udskudt scope og prioriteter; en plan alene markeres ikke som gennemført demo."
+      ],
+      "issue_number": 68,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/68"
+    },
+    {
+      "code": "B37",
+      "title": "Stabiliser og smoke-test den samlede demoversion",
+      "week": 3,
+      "estimate_hours": 6,
+      "type": "verification",
+      "priority": "P0",
+      "dependencies": [
+        "B09",
+        "B25",
+        "B26",
+        "B27",
+        "B28"
+      ],
+      "goal": "Gør slutdemoen reproducerbar og ret de vigtigste tilbageværende fejl.",
+      "acceptance": [
+        "Release-kandidaten kan deployes og gennemføre kerneforløbet fra et kendt datagrundlag.",
+        "Fejl prioriteres inden for tidsbudgettet; scopeændringer aftales og dokumenteres.",
+        "CI, genstart med vedvarende data, roller og engelsk/dansk er kontrolleret med linked evidens."
+      ],
+      "issue_number": 66,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/66"
+    },
+    {
+      "code": "B38",
+      "title": "Saml driftsvejledning, procesrefleksion og udvidelsespunkt",
+      "week": 3,
+      "estimate_hours": 4,
+      "type": "process",
+      "priority": "P0",
+      "dependencies": [
+        "B09",
+        "B28",
+        "B31",
+        "B33",
+        "B35"
+      ],
+      "goal": "Gør projektets beslutninger, resultater og begrænsninger efterprøvelige.",
+      "acceptance": [
+        "README forklarer faktisk build, tests, start, deployment, version og kendte mangler.",
+        "Procesrefleksion sammenholder faktiske målinger og eksperimenter uden at opfinde historik.",
+        "Modulgrænser og fremtidig klageudvidelse er beskrevet; klagebehandling er ikke implementeret."
+      ],
+      "issue_number": 67,
+      "issue_url": "https://github.com/EmilXavierVT/MTOGO/issues/67"
+    }
+  ]
+}
