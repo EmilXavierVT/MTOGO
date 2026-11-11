@@ -1,5 +1,6 @@
 package app.entities;
 
+import app.entities.users.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,4 +21,8 @@ public class Complaint {
 
     @Column(nullable = false)
     private String message;
+
+    @ManyToOne
+    @JoinColumn(nullable = false)
+    private User user;
 }

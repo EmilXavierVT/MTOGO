@@ -18,7 +18,6 @@
         <thymeleaf-extras.version>3.0.4.RELEASE</thymeleaf-extras.version>
         <slf4j.version>2.0.12</slf4j.version>
         <jackson.version>2.17.0-rc1</jackson.version>
-        <hikariCP.version>5.1.0</hikariCP.version>
         <junit.version>5.10.2</junit.version>
         <hamcrest.version>2.2</hamcrest.version>
         <postgresql.version>42.7.2</postgresql.version>
@@ -59,9 +58,9 @@
             <version>${jackson.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP</artifactId>
-            <version>${hikariCP.version}</version>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-hikaricp</artifactId>
+            <version>${hibernate-version}</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>

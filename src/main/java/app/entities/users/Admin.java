@@ -11,12 +11,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+
 public class Admin extends User {
 
-
-    Admin(UUID id, String name, String passwordHash, String email, Role role, Instant createdAt) {
-        super(id, name, passwordHash, email, role, createdAt);
-    }
 }
