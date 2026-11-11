@@ -140,6 +140,7 @@
 
     <build>
         <plugins>
+            <!-- Runs JUnit 5 tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -148,20 +149,8 @@
                     <failIfNoTests>true</failIfNoTests>
                 </configuration>
             </plugin>
-        </plugins>
-    </build>
 
-
-    <build>
-        <plugins>
-            <!-- Runs your JUnit 5 tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.4</version>
-            </plugin>
-
-            <!-- Collects test coverage and generates a report -->
+            <!-- Test coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -183,8 +172,7 @@
                 </executions>
             </plugin>
 
-            <!-- Checks compiled code for potential bugs -->
-
+            <!-- Static code analysis -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
@@ -203,7 +191,8 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
+
+
 </project>
