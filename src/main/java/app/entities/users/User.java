@@ -1,6 +1,6 @@
 package app.entities.users;
 
-import app.enums.Role;
+import app.entities.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

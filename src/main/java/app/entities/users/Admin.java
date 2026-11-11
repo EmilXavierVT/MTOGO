@@ -1,6 +1,5 @@
 package app.entities.users;
 
-import app.enums.Role;
 import jakarta.persistence.Entity;
 import lombok.*;
 
