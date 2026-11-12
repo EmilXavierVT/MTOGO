@@ -1,7 +1,7 @@
 package app.entities.enums;
 
-public enum Role {
-    CUSTOMER,
-    COURIER,
-    RESTAURANT_OWNER
+import io.javalin.security.RouteRole;
+
+public enum Role implements RouteRole {
+    CUSTOMER, COURIER, RESTAURANT_OWNER, ADMIN
 }

@@ -16,7 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Customer extends User {
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String address;
 
     @Column
