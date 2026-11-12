@@ -1,0 +1,35 @@
+@baseUrl = http://localhost:7070
+@email = local.customer@example.test
+@password = LocalTestPassword123!
+@token = paste-the-token-returned-by-login
+
+
+
+### Register a customer without an address (expected: 201 Created)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Local test customer",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### Log in as an existing account (customer, courier, restaurant owner or admin)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{"email": "{{email}}", "password": "{{password}}"}
+
+### Check which account the token belongs to
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### Missing token: 401
+GET {{baseUrl}}/api/auth/me
+
+### Invalid token: 401
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer invalid
+
+
