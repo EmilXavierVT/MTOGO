@@ -1,6 +1,8 @@
 package app;
 
 import app.config.HibernateConfig;
+import app.controller.OwnerMenuController;
+import app.dao.OwnerMenuDao;
 import app.exceptions.ApiException;
 import app.security.SecurityController;
 import app.server.Routing;
@@ -23,7 +25,7 @@ public class App {
         app.exception(ApiException.class, (e, ctx) -> ctx.status(e.getCode()).json(Map.of("error", e.getMessage())));
         app.beforeMatched(security::authenticate);
         app.beforeMatched(security::authorize);
-        Routing.registerRoutes(app, security);
+        Routing.registerRoutes(app, security, new OwnerMenuController(new OwnerMenuDao(emf)));
         return app;
     }
 }
