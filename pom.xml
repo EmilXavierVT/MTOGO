@@ -208,6 +208,10 @@
                     <rulesets>
                         <ruleset>${project.basedir}/pmd-ruleset.xml</ruleset>
                     </rulesets>
+
+                    <minimumPriority>5</minimumPriority>
+                    <failurePriority>2</failurePriority>
+                    <verbose>true</verbose>
                 </configuration>
                 <executions>
                     <execution>
