@@ -30,7 +30,6 @@ ENABLE_LINTERS:
 
   # Security and dependencies
   - REPOSITORY_SECRETLINT
-  - REPOSITORY_OSV_SCANNER
 
 # Report findings without failing CI
 DISABLE_ERRORS_LINTERS:

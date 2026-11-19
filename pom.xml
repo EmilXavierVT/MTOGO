@@ -14,13 +14,13 @@
         <maven.compiler.target>17</maven.compiler.target>
         <javalin.version>6.1.3</javalin.version>
         <javalin-rendering.version>6.1.3</javalin-rendering.version>
-        <thymeleaf.version>3.1.5.RELEASE</thymeleaf.version>
+        <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
         <thymeleaf-extras.version>3.0.4.RELEASE</thymeleaf-extras.version>
         <slf4j.version>2.0.12</slf4j.version>
-        <jackson.version>2.18.11</jackson.version>
+        <jackson.version>2.17.0-rc1</jackson.version>
         <junit.version>5.10.2</junit.version>
         <hamcrest.version>2.2</hamcrest.version>
-        <postgresql.version>42.7.11</postgresql.version>
+        <postgresql.version>42.7.2</postgresql.version>
         <hibernate-version>7.1.0.Final</hibernate-version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
