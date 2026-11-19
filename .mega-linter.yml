@@ -24,8 +24,6 @@ ENABLE_LINTERS:
   - BASH_SHELLCHECK
 
   # Documentation
-  - SPELL_CSPELL
-  - SPELL_CODESPELL
   - MARKDOWN_MARKDOWNLINT
   - XML_XMLLINT
 
@@ -34,8 +32,6 @@ ENABLE_LINTERS:
 
 # Report findings without failing CI
 DISABLE_ERRORS_LINTERS:
-  - SPELL_CSPELL
-  - SPELL_CODESPELL
   - MARKDOWN_MARKDOWNLINT
 
 # Ignore generated/build files
