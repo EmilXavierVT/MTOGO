@@ -1,6 +1,7 @@
 package app.server;
 
 import app.controller.OwnerMenuController;
+import app.controller.RestaurantController;
 import app.controller.SystemController;
 import app.entities.enums.Role;
 import app.security.SecurityController;
@@ -9,7 +10,7 @@ import io.javalin.Javalin;
 public final class Routing {
     private Routing() {}
 
-    public static void registerRoutes(Javalin app, SecurityController security, OwnerMenuController ownerMenus) {
+    public static void registerRoutes(Javalin app, SecurityController security, OwnerMenuController ownerMenus, RestaurantController restaurant) {
         SystemController.addRoutes(app);
         app.post("/api/auth/login", security::login);
         app.post("/api/auth/register", security::register);
@@ -17,6 +18,8 @@ public final class Routing {
         app.get("/api/owner/menus", ownerMenus::listMenus, Role.RESTAURANT_OWNER);
         app.post("/api/owner/menus/{menuId}/products", ownerMenus::createProduct, Role.RESTAURANT_OWNER);
         app.put("/api/owner/menus/{menuId}/products/{productId}", ownerMenus::updateProduct, Role.RESTAURANT_OWNER);
+        app.get("/api/restaurants", restaurant :: displayRestaurants, Role.CUSTOMER);
+        app.get("/api/restaurants/{restaurantId}/menus", restaurant :: displayRestaurantMenus, Role.CUSTOMER);
     }
 }
 
