@@ -6,6 +6,7 @@ JAVA_PMD_CONFIG_FILE: pmd-ruleset.xml
 JAVA_PMD_ARGUMENTS: "--minimum-priority 2"
 
 JAVA_CHECKSTYLE_CONFIG_FILE: checkstyle.xml
+YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
 
 ENABLE_LINTERS:
   # Java
