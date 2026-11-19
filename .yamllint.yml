@@ -1,0 +1,9 @@
+extends: default
+
+rules:
+  # Do not require --- at the beginning of YAML files
+  document-start: disable
+
+  # Allow GitHub Actions keys such as "on"
+  truthy:
+    check-keys: false

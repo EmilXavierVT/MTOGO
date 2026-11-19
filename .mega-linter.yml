@@ -1,4 +1,3 @@
-# MTOGO MegaLinter configuration
 APPLY_FIXES: none
 VALIDATE_ALL_CODEBASE: true
 FAIL_IF_MISSING_LINTER_IN_FLAVOR: true
