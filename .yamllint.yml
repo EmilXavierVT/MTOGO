@@ -1,9 +1,15 @@
 extends: default
 
 rules:
-  # Do not require --- at the beginning of YAML files
+  # GitHub Actions does not require ---
   document-start: disable
 
-  # Allow GitHub Actions keys such as "on"
+  # Allow keys such as "on"
   truthy:
     check-keys: false
+
+  # Allow longer workflow commands
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
