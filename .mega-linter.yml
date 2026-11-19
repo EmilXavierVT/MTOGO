@@ -6,6 +6,8 @@ FAIL_IF_MISSING_LINTER_IN_FLAVOR: true
 JAVA_PMD_CONFIG_FILE: pmd-ruleset.xml
 JAVA_PMD_ARGUMENTS: "--minimum-priority 2"
 
+JAVA_CHECKSTYLE_CONFIG_FILE: checkstyle.xml
+
 ENABLE_LINTERS:
   # Java
   - JAVA_CHECKSTYLE
