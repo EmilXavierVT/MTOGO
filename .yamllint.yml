@@ -18,3 +18,5 @@ rules:
     max: 2
     max-start: 1
     max-end: 0
+
+  new-line-at-end-of-file: disable
