@@ -50,6 +50,7 @@ public final class SecurityTestData {
 
     private static Restaurant restaurant(User owner, String address) {
         Restaurant restaurant = new Restaurant();
+        restaurant.setName("Restaurant at " + address);
         restaurant.setOwner(owner);
         restaurant.setAddress(address);
         return restaurant;

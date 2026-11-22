@@ -4,6 +4,7 @@ import app.entities.Complaint;
 import app.entities.orderFlow.Delivery;
 import app.entities.orderFlow.Feedback;
 import app.entities.orderFlow.Order;
+import app.entities.orderFlow.OrderLine;
 import app.entities.restaurant.Menu;
 import app.entities.restaurant.Product;
 import app.entities.restaurant.Restaurant;
@@ -20,6 +21,7 @@ final class EntityRegistry {
     static void registerEntities(Configuration configuration) {
 
         configuration.addAnnotatedClass(Order.class);
+        configuration.addAnnotatedClass(OrderLine.class);
         configuration.addAnnotatedClass(Delivery.class);
         configuration.addAnnotatedClass(Feedback.class);
 
