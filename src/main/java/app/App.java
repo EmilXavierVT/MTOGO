@@ -34,7 +34,7 @@ public class App {
         SecurityController security = new SecurityController(emf, secret);
         Javalin app = Javalin.create(config -> {
             config.showJavalinBanner = false;
-            config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.allowHost("http://localhost:5173")));
+            config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.allowHost("http://localhost:3000")));
         });
         app.exception(ApiException.class, (e, ctx) -> ctx.status(e.getCode()).json(Map.of("error", e.getMessage())));
         app.beforeMatched(security::authenticate);
