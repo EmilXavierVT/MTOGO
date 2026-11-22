@@ -13,7 +13,21 @@ import java.util.Map;
 public class App {
     public static void initiate() {
         EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
-        createApp(emf, System.getenv("SECRET_KEY")).start(7070);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (emf.isOpen()) {
+                emf.close();
+            }
+        }));
+
+        try {
+            createApp(emf, System.getenv("SECRET_KEY")).start(7070);
+        } catch (RuntimeException | Error e) {
+            if (emf.isOpen()) {
+                emf.close();
+            }
+            throw e;
+        }
     }
 
     public static Javalin createApp(EntityManagerFactory emf, String secret) {

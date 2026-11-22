@@ -1,0 +1,22 @@
+extends: default
+
+rules:
+  # GitHub Actions does not require ---
+  document-start: disable
+
+  # Allow keys such as "on"
+  truthy:
+    check-keys: false
+
+  # Allow longer workflow commands
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
+  empty-lines:
+    max: 2
+    max-start: 1
+    max-end: 0
+
+  new-line-at-end-of-file: disable
