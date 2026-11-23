@@ -12,6 +12,7 @@ import app.entities.restaurant.Restaurant;
 import app.entities.users.User;
 import app.exceptions.ApiException;
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
 import java.math.BigDecimal;
@@ -57,24 +58,7 @@ public class OrderService {
             if (restaurant == null) {
                 throw new ApiException(404, "Restaurant not found");
             }
-            Map<UUID, Product> validatedProducts = new HashMap<>();
-            // Lock in stable order and hold locks until checkout commits.
-            var sortedItems = request.products().stream()
-                    .sorted(java.util.Comparator.comparing(OrderController.OrderItemRequest::productId))
-                    .toList();
-            for (OrderController.OrderItemRequest item : sortedItems) {
-                Product product = em.find(Product.class, item.productId(), LockModeType.PESSIMISTIC_WRITE);
-                if (product == null) {
-                    throw new ApiException(404, "Product not found: " + item.productId());
-                }
-                if (!product.getMenu().getRestaurant().getId().equals(request.restaurantId())) {
-                    throw new ApiException(400, "All products must belong to the selected restaurant");
-                }
-                if (!product.isAvailable()) {
-                    throw new ApiException(409, "Product is unavailable: " + item.productId());
-                }
-                validatedProducts.put(product.getId(), product);
-            }
+            Map<UUID, Product> validatedProducts = loadValidatedProducts(em, request);
 
             PricingService.PricingResult pricing =
                     pricingService.calculate(request.products());
@@ -104,6 +88,29 @@ public class OrderService {
         });
     }
 
+    private Map<UUID, Product> loadValidatedProducts(
+            EntityManager em, OrderController.CheckoutRequest request) {
+        Map<UUID, Product> products = new HashMap<>();
+        // Lock in stable order and hold locks until checkout commits.
+        var sortedItems = request.products().stream()
+                .sorted(java.util.Comparator.comparing(OrderController.OrderItemRequest::productId))
+                .toList();
+        for (OrderController.OrderItemRequest item : sortedItems) {
+            Product product = em.find(Product.class, item.productId(), LockModeType.PESSIMISTIC_WRITE);
+            if (product == null) {
+                throw new ApiException(404, "Product not found: " + item.productId());
+            }
+            if (!product.getMenu().getRestaurant().getId().equals(request.restaurantId())) {
+                throw new ApiException(400, "All products must belong to the selected restaurant");
+            }
+            if (!product.isAvailable()) {
+                throw new ApiException(409, "Product is unavailable: " + item.productId());
+            }
+            products.put(product.getId(), product);
+        }
+        return products;
+    }
+
     private static void validateRequest(OrderController.CheckoutRequest request) {
         if (request == null || request.restaurantId() == null) {
             throw new ApiException(400, "Restaurant ID is required");
@@ -114,8 +121,14 @@ public class OrderService {
         if (request.simulatedPaymentResult() == null) {
             throw new ApiException(400, "simulatedPaymentResult must be APPROVED or DECLINED");
         }
+        validateItems(request.products());
+        validateContactDetails(request);
+        validateAcceptedTotal(request.acceptedTotal());
+    }
+
+    private static void validateItems(java.util.List<OrderController.OrderItemRequest> items) {
         Set<UUID> productIds = new HashSet<>();
-        for (OrderController.OrderItemRequest item : request.products()) {
+        for (OrderController.OrderItemRequest item : items) {
             if (item == null || item.productId() == null) {
                 throw new ApiException(400, "Each item must have a product ID");
             }
@@ -126,13 +139,19 @@ public class OrderService {
                 throw new ApiException(400, "Duplicate product IDs are not allowed");
             }
         }
+    }
+
+    private static void validateContactDetails(OrderController.CheckoutRequest request) {
         if (request.name() == null || request.name().isBlank()
                 || request.phone() == null || request.phone().isBlank()
                 || request.address() == null || request.address().isBlank()) {
             throw new ApiException(400, "Name, phone and delivery address are required");
         }
-        if (request.acceptedTotal() == null || request.acceptedTotal().signum()<0
-                || request.acceptedTotal().stripTrailingZeros().scale() > 2) {
+    }
+
+    private static void validateAcceptedTotal(BigDecimal acceptedTotal) {
+        if (acceptedTotal == null || acceptedTotal.signum() < 0
+                || acceptedTotal.stripTrailingZeros().scale() > 2) {
             throw new ApiException(400, "Accepted total must be a non-negative amount in whole øre");
         }
     }
