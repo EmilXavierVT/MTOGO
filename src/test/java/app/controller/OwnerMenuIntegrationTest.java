@@ -144,7 +144,7 @@ class OwnerMenuIntegrationTest {
         changes.put("available", true);
         assertTrue(json(200, request("PUT", product, owner, changes.toString())).get("available").booleanValue());
         try (EntityManager em = emf.createEntityManager()) {
-            assertEquals(89.95, em.find(Order.class, orderId).getTotalPrice());
+            assertEquals(new BigDecimal("89.95"), em.find(Order.class, orderId).getTotalPrice());
         }
     }
 
@@ -220,10 +220,15 @@ class OwnerMenuIntegrationTest {
         return emf.callInTransaction(em -> {
             Order order = new Order();
             order.setCustomer(em.getReference(User.class, fixtures.accounts().get(Role.CUSTOMER)));
-            order.setRestaurant(em.getReference(User.class, fixtures.accounts().get(Role.RESTAURANT_OWNER)));
+            order.setRestaurant(em.getReference(Restaurant.class, fixtures.restaurant()));
             order.setOrderTime(LocalDateTime.of(2026, 11, 18, 12, 0));
             order.setStatus(Status.DELIVERED);
-            order.setTotalPrice(89.95);
+            order.setTotalPrice(new BigDecimal("89.95"));
+            order.setCustomerName("Customer");
+            order.setCustomerPhone("12345678");
+            order.setDeliveryAddress("Test address");
+            order.setNetAmount(new BigDecimal("71.96"));
+            order.setCommission(BigDecimal.ZERO);
             em.persist(order);
             return order.getId();
         });
