@@ -30,8 +30,9 @@ public final class SecurityTestData {
             User otherOwner = account("Other owner", "other-owner@example.test", Role.RESTAURANT_OWNER, hash);
             em.persist(otherCustomer);
             em.persist(otherOwner);
-            Restaurant restaurant = restaurant(em.find(User.class, accounts.get(Role.RESTAURANT_OWNER)), "First address");
-            Restaurant otherRestaurant = restaurant(otherOwner, "Second address");
+            Restaurant restaurant = restaurant(em.find(User.class, accounts.get(Role.RESTAURANT_OWNER)),
+                    "First restaurant", "First address");
+            Restaurant otherRestaurant = restaurant(otherOwner, "Second restaurant", "Second address");
             em.persist(restaurant);
             em.persist(otherRestaurant);
             em.getTransaction().commit();
@@ -48,9 +49,10 @@ public final class SecurityTestData {
         return user;
     }
 
-    private static Restaurant restaurant(User owner, String address) {
+    private static Restaurant restaurant(User owner, String name, String address) {
         Restaurant restaurant = new Restaurant();
         restaurant.setOwner(owner);
+        restaurant.setName(name);
         restaurant.setAddress(address);
         return restaurant;
     }
