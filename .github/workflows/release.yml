@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -66,15 +66,13 @@ jobs:
           SHA: ${{ steps.release.outputs.sha }}
         shell: bash
         run: |
-          for workflow in ci.yml mega-linter.yml; do
-            result=$(gh api \
-              "repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs?head_sha=$SHA&event=push&branch=main" \
-              --jq '.workflow_runs | sort_by(.run_number, .run_attempt) | last | .conclusion // "pending"')
-            if [[ "$result" != success ]]; then
-              echo "::error::$workflow has not passed for release commit $SHA ($result)"
-              exit 1
-            fi
-          done
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs"
+          result=$(gh api "$endpoint?head_sha=$SHA&event=push&branch=main" \
+            --jq '.workflow_runs | sort_by(.run_number, .run_attempt) | last | .conclusion // "pending"')
+          if [[ "$result" != success ]]; then
+            echo "::error::CI has not passed for release commit $SHA ($result)"
+            exit 1
+          fi
 
           echo "CI verified successfully for $SHA"
 
@@ -119,6 +117,20 @@ jobs:
         run: |
           if docker buildx imagetools inspect "$IMAGE:$VERSION" > /dev/null 2>&1; then
             echo "::error::Release $VERSION already exists"
+            exit 1
+          fi
+
+          endpoint="https://hub.docker.com/v2/repositories/$IMAGE"
+          repository_status=$(curl --silent --show-error --connect-timeout 10 --max-time 30 \
+            --output "$RUNNER_TEMP/repository.json" --write-out '%{http_code}' "$endpoint/")
+          if [[ "$repository_status" != 200 ]]; then
+            echo "::error::Cannot verify the Docker Hub repository ($repository_status)"
+            exit 1
+          fi
+          tag_status=$(curl --silent --show-error --connect-timeout 10 --max-time 30 \
+            --output "$RUNNER_TEMP/release-tag.json" --write-out '%{http_code}' "$endpoint/tags/$VERSION/")
+          if [[ "$tag_status" != 404 ]]; then
+            echo "::error::Release tag must be confirmed absent before publishing (HTTP $tag_status)"
             exit 1
           fi
 

@@ -17,8 +17,9 @@ Begræns adgang til den rigtige `.env` med filrettigheder 600.
 1. Backend `Backend Build & Test` kører Java 17 `mvn clean verify`, gemmer test-,
    coverage- og PMD-rapporter, bygger produktionsimaget og starter det med PostgreSQL.
    Smoke-testen kræver HTTP 200 på `/` og 401 på `/api/auth/me` uden token.
-2. `Code Quality & Security` kører MegaLinter. Begge backend-checks skal bestå for
-   præcis samme main-commit, før image-workflowen må publicere.
+2. CI kalder MegaLinter som en genbrugelig workflow. `CI checks` kræver, at både
+   backend-jobbet og statisk analyse består. Image-jobbet afhænger direkte af dette
+   resultat for samme commit; det bruger ingen privilegeret `workflow_run`-trigger.
 3. Frontend `Frontend Build & Lint` bruger Node 24 ligesom Docker-imaget. Det kører
    lint, tests og build samt en test af produktionssidernes og API-proxyens routing.
    CI kører på PR'er og main; publicering kræver bestået main-CI.
@@ -26,14 +27,14 @@ Begræns adgang til den rigtige `.env` med filrettigheder 600.
    og promoverer kun til `latest`, hvis committet stadig er aktuelt main. PR-runs
    kan ikke publicere. BuildKit-cache genbruges; publicerede images får SBOM.
 5. `Publish Versioned Release` kontrollerer tag, main-tilhørsforhold og begge
-   backend-checks og promoverer et eksisterende image ved digest. Det ændrer ikke
-   Watchtowers valgte tag.
+   samlede main-CI og promoverer et eksisterende image ved digest. Et registry-/API-
+   problem må ikke fortolkes som et ledigt tag. Det ændrer ikke Watchtowers valgte tag.
 
 Main beskyttes i begge repos med opdateret branch, krævede GitHub Actions-checks,
 én anden persons godkendelse, afvisning af forældede godkendelser og afklarede
 reviewtråde. Reglerne gælder også administratorer; force-push og sletning afvises.
-Backend kræver `Backend Build & Test` og `Code Quality & Security`; frontend kræver
-`Frontend Build & Lint`. Check-kilden er GitHub Actions, app-id 15368.
+Backend kræver `CI checks`, som omfatter build, PostgreSQL-smoke og MegaLinter;
+frontend kræver `Frontend Build & Lint`. Check-kilden er GitHub Actions, app-id 15368.
 
 ## Compose og Watchtower
 
