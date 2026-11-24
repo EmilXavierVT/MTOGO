@@ -7,6 +7,7 @@ import app.controller.RestaurantController;
 import app.dao.OwnerMenuDao;
 import app.dao.RestaurantDao;
 import app.exceptions.ApiException;
+import app.exceptions.PriceChangedException;
 import app.security.SecurityController;
 import app.server.Routing;
 import app.service.OrderService;
@@ -40,7 +41,14 @@ public class App {
             config.showJavalinBanner = false;
             config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
         });
-        app.exception(ApiException.class, (e, ctx) -> ctx.status(e.getCode()).json(Map.of("error", e.getMessage())));
+        app.exception(ApiException.class, (e, ctx) -> {
+            if (e instanceof PriceChangedException changed) {
+                ctx.status(e.getCode()).json(Map.of("error", e.getMessage(),
+                        "updatedTotal", changed.getUpdatedTotal()));
+            } else {
+                ctx.status(e.getCode()).json(Map.of("error", e.getMessage()));
+            }
+        });
         app.beforeMatched(security::authenticate);
         app.beforeMatched(security::authorize);
         Routing.registerRoutes(app, security, new OwnerMenuController(new OwnerMenuDao(emf)),

@@ -6,11 +6,13 @@ import app.entities.enums.Status;
 import app.entities.orderFlow.Order;
 import app.entities.orderFlow.OrderLine;
 import app.security.SecurityController;
+import app.security.Ownership;
 import app.entities.enums.Role;
 import app.entities.restaurant.Product;
 import app.entities.restaurant.Restaurant;
 import app.entities.users.User;
 import app.exceptions.ApiException;
+import app.exceptions.PriceChangedException;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -64,10 +66,7 @@ public class OrderService {
                     pricingService.calculate(request.products(), validatedProducts);
 
             if (pricing.total().compareTo(request.acceptedTotal()) != 0) {
-                throw new ApiException(
-                        409,
-                        "Total changed. Accept the updated total: " + pricing.total()
-                );
+                throw new PriceChangedException(pricing.total());
             }
 
             if (paymentSimulator.simulate(request.simulatedPaymentResult())
@@ -86,6 +85,24 @@ public class OrderService {
             orderDao.save(em, order);
             return order;
         });
+    }
+
+    public Order getCustomerOrder(SecurityController.CurrentUser user, UUID orderId) {
+        if (user == null || user.id() == null) {
+            throw new ApiException(401, "Authentication required");
+        }
+        if (user.role() != Role.CUSTOMER) {
+            throw new ApiException(403, "Access denied");
+        }
+        try (EntityManager em = emf.createEntityManager()) {
+            Order order = em.createQuery(
+                    "select o from Order o join fetch o.restaurant where o.id = :orderId", Order.class)
+                    .setParameter("orderId", orderId)
+                    .getResultStream().findFirst()
+                    .orElseThrow(() -> new ApiException(404, "Order not found"));
+            Ownership.requireCustomer(user, order.getCustomer().getId());
+            return order;
+        }
     }
 
     private Map<UUID, Product> loadValidatedProducts(
