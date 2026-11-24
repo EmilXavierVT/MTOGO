@@ -8,6 +8,13 @@
 
 
 *.properties
+!.mvn/wrapper/maven-wrapper.properties
+
+# Local Takt state and Python caches
+.tt_cache
+_temp.token
+__pycache__/
+release-plan.json
 
 # User-specific stuff
 .idea/**/workspace.xml
@@ -219,3 +226,8 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij,maven,windows,osx
+
+# Deployment secrets stay on the deployment host.
+.env
+.env.*
+!.env.example

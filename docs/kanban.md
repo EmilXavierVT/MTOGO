@@ -25,6 +25,8 @@ Et issue indeholder et lille resultat, acceptkriterier, afhængigheder, uge og f
 
 ## Trunk-based development og review
 
+Indtil Takt aktiveres, gælder PR-kravet nedenfor. Efter teamets validering kan [Takt](takt-workflow.md) aktiveres: ét issue bliver ét verificeret commit, som fast-forwardes til main. Samarbejde og mentorship sker under udvikling, og Review bruges til den automatiske afleveringskontrol.
+
 Arbejd på korte branches fra `main`, og integrer tilstræbt samme arbejdsdag. Store ændringer opdeles i demonstrerbare trin. Hver ændring går gennem en lille PR med mindst én anden persons godkendelse og bestået CI. Link issue og PR/commits, så sammenhængen er synlig.
 
 Reviewkravet giver videndeling og kontrol af især adgang, økonomi, data og ordretilstande. Den lave review-WIP skal holde review kort. Hvis teamet senere ændrer politikken, dokumenteres årsag og konsekvens i et flow review. `main` holdes stabil og potentielt deploybar.
@@ -34,7 +36,7 @@ Reviewkravet giver videndeling og kontrol af især adgang, økonomi, data og ord
 - Acceptkriterier er opfyldt og kan demonstreres, inklusive relevante fejltilfælde.
 - Relevante automatiske tests og CI består.
 - Backend og frontend bygger; lint/statisk analyse og coverage-resultater er tilgængelige.
-- Mindst én anden persons review er godkendt; blokerende feedback er afklaret.
+- Før Takt-aktivering: mindst én anden persons review er godkendt. Efter aktivering: Takt verification består; samarbejde, ansvar og blokerende feedback er afklaret.
 - Ændringen er integreret i `main`, linked til issue og tilgængelig i demomiljøet.
 - Nødvendig dokumentation er opdateret.
 - Afslutning og links til evidens er registreret på issue/board.
@@ -63,16 +65,20 @@ Database- og samtidighedsregler verificeres med relevante integrationstests mod 
 - Throughput: Antal færdige issues pr. uge. Vis proces-/mødeopgaver separat fra funktioner/tekniske leverancer, så et ekstra møde ikke ligner øget produktleverance.
 - WIP: Antal opgaver i In progress og Review, inklusive blokerede.
 
-Brug boardets Start date og Done date til datoer, med issuehistorik/log til præcise tidspunkter. Target date er kun en prognose. Udfyld ikke faktiske datoer, cyklustider eller resultater på forhånd.
+Brug gh flow time --issue <nummer> til nuværende og samlet tid i In progress og Review, med [registrering af alle besøg](takt-workflow.md#issue-time). Brug boardets Start date og Done date til datoer, med issuehistorik/log til præcise tidspunkter. Target date er kun en prognose. Udfyld ikke faktiske datoer, cyklustider eller resultater på forhånd.
 
 Hold et flow review på 30 minutter hver uge med fire deltagere (2 persontimer i alt). Gennemgå målinger, ældste aktive arbejde og blokeringer; vælg ét forbedringseksperiment og følg op på sidste uges eksperiment. Brug [skabelonen](flow-reviews/template.md) og link noten fra review-issuet. Mødedato og ansvarlig aftales af teamet.
 
 ## Deployment og releases
 
-Docker Compose skal kunne starte backend, frontend og database med vedvarende databasedata. Hosting er uafklaret; et konkret mål og adgang er en første afklaringsopgave. Miljøværdier og hemmeligheder lægges uden for Git; dokumentation viser kun navne og ufølsomme eksempler.
+Docker Compose starter backend, frontend og database med vedvarende databasedata. Applikationen hostes på dropletten bag Caddy. Miljøværdier og hemmeligheder lægges uden for Git; dokumentation viser kun navne og ufølsomme eksempler. Se [deploymentvejledningen](deployment.md).
 
-Hver ugedemo får en versionsmærket release, fx `0.1.0`, `0.2.0` og `0.3.0`. Under 0.x bruges ny minorversion til et nyt funktionelt inkrement og patchversion til rettelser; praksis og eventuelle kompatibilitetsbrud beskrives i releasenoter. Versionsnumre oprettes først, når der faktisk findes en release.
+Hver ugedemo får en versionsmærket release, fx `0.1.0`, `0.2.0` og `0.3.0`. Under 0.x bruges ny minorversion til et nyt funktionelt inkrement og patchversion til rettelser; praksis og eventuelle kompatibilitetsbrud beskrives i releasenoter. Ved Takt-aktivering oprettes versionsmærkede images automatisk ud fra issuets labels; ugedemoen kan vælge en eksisterende version. Se [versionspolitikken](takt-workflow.md#automatic-versions).
 
-Deployment startes manuelt gennem GitHub Actions efter bestået CI og skal bruge den præcise version, som er kontrolleret. Dokumenter start, smoke check, gendannelse/genudrulning af tidligere version og håndtering af vedvarende data. En tilbageførsel af kode må ikke antage, at databasedata kan nedgraderes automatisk.
+Før Takt-aktivering publicerer de separate main-workflows images efter deres eksisterende politik. Efter aktivering kræver publicering bestået Takt-verifikation for det præcise commit i hver repository.
+Kun det aktuelle main-commit promoveres til det latest-tag, Watchtower følger.
+Versionsmærkede demoreleases publiceres manuelt gennem GitHub Actions ved at promovere samme image-digest.
+Smoke check og rollback er dokumenteret i deploymentvejledningen.
+En tilbageførsel af kode må ikke antage, at databasedata kan nedgraderes automatisk.
 
 Ved vejledning vises inkrement, versionsnummer, board, målinger, forbedringseksperiment, build/tests, statisk analyse, coverage og kendte mangler. Vis faktisk evidens; denne plan er ikke evidens for implementering.

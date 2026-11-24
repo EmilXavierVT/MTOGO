@@ -1,10 +1,10 @@
-name: Deploy Release
+name: Publish Versioned Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release tag (e.g. v0.1.0)"
+        description: Existing Git version tag (e.g. v0.2.1)
         required: true
         type: string
 
@@ -13,144 +13,55 @@ permissions:
   actions: read
 
 concurrency:
-  group: release-publish
-  cancel-in-progress: false
+  group: dockerhub-publish-main
+  queue: max
 
 env:
   IMAGE: emilxvt/mtogo
 
 jobs:
   release:
-    name: Publish Versioned Image
-    runs-on: ubuntu-22.04
+    name: Verify or promote an existing version
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
           persist-credentials: false
-
-
-      - name: Validate release tag
-        id: release
-        env:
-          VERSION: ${{ inputs.version }}
-        shell: bash
-        run: |
-          if [[ ! "$VERSION" =~ ^v0\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
-            echo "::error::Invalid SemVer version"
-            exit 1
-          fi
-
-          git fetch origin main --tags
-
-          SHA=$(git rev-parse --verify "refs/tags/$VERSION^{commit}") || {
-            echo "::error::Release tag does not exist"
-            exit 1
-          }
-
-          if ! git merge-base --is-ancestor "$SHA" origin/main; then
-            echo "::error::Release commit is not on main"
-            exit 1
-          fi
-
-          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-          echo "Release: $VERSION"
-          echo "Commit: $SHA"
-
-      - name: Verify CI passed
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SHA: ${{ steps.release.outputs.sha }}
-        shell: bash
-        run: |
-          RUN_COUNT=$(gh api \
-            "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&status=success" \
-            --jq '[.workflow_runs[] | select(.head_branch == "main" and .conclusion == "success")] | length')
-
-          if [[ "$RUN_COUNT" -eq 0 ]]; then
-            echo "::error::No successful CI run found for commit $SHA"
-            exit 1
-          fi
-
-          echo "CI verified successfully for $SHA"
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
-
-      - name: Sign in to Docker Hub
-        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-
-      - name: Verify Docker image exists
-        id: source
+      - name: Verify the tagged main commit and reuse its exact image digest
         env:
-          SHA: ${{ steps.release.outputs.sha }}
-        shell: bash
-        run: |
-          SOURCE="$IMAGE:sha-$SHA"
-
-          DETAILS=$(docker buildx imagetools inspect "$SOURCE") || {
-            echo "::error::Docker image does not exist or cannot be accessed"
-            exit 1
-          }
-
-          DIGEST=$(echo "$DETAILS" | awk '/^Digest:/ {print $2; exit}')
-
-          if [[ ! "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
-            echo "::error::Could not resolve source image digest"
-            exit 1
-          fi
-
-          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
-          echo "Source image: $SOURCE"
-          echo "Digest: $DIGEST"
-
-      - name: Prevent release tag overwrite
-        env:
+          GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
-        shell: bash
+          TAKT_ENABLED: ${{ vars.TAKT_ENABLED }}
         run: |
-          if docker buildx imagetools inspect "$IMAGE:$VERSION" > /dev/null 2>&1; then
-            echo "::error::Release $VERSION already exists"
-            exit 1
-          fi
-
-          echo "Release tag $VERSION is available"
-
-      - name: Publish versioned image
-        env:
-          VERSION: ${{ inputs.version }}
-          DIGEST: ${{ steps.source.outputs.digest }}
-        shell: bash
-        run: |
-          docker buildx imagetools create \
-            --prefer-index=false \
-            --tag "$IMAGE:$VERSION" \
-            "$IMAGE@$DIGEST"
-
-          echo "Published $IMAGE:$VERSION"
-
-      - name: Verify release image
-        env:
-          VERSION: ${{ inputs.version }}
-          EXPECTED_DIGEST: ${{ steps.source.outputs.digest }}
-        shell: bash
-        run: |
-          DETAILS=$(docker buildx imagetools inspect "$IMAGE:$VERSION")
-
-          ACTUAL_DIGEST=$(echo "$DETAILS" | awk '/^Digest:/ {print $2; exit}')
-
-          if [[ "$ACTUAL_DIGEST" != "$EXPECTED_DIGEST" ]]; then
-            echo "::error::Release image digest mismatch"
-            exit 1
-          fi
-
-          echo "Release verified successfully"
-          echo "Image: $IMAGE:$VERSION"
-          echo "Digest: $ACTUAL_DIGEST"
+          python3 - <<'PYTHON'
+          import os, sys
+          sys.path.insert(0, 'scripts')
+          import takt
+          from publish_images import digest, ensure_tag
+          version = os.environ['VERSION']
+          takt.parse_version(version)
+          takt.git('fetch', 'origin', 'main', '--tags')
+          sha = takt.git('rev-parse', '--verify', f'refs/tags/{version}^{{commit}}')
+          takt.git('merge-base', '--is-ancestor', sha, 'origin/main')
+          repo = takt.repository()
+          if os.environ.get('TAKT_ENABLED') == 'true':
+              takt.verified_plan(repo, sha)
+          else:
+              runs = takt.pages(f'repos/{repo}/actions/workflows/ci.yml/runs?head_sha={sha}&event=push&branch=main', 'workflow_runs')
+              latest = max(runs, key=lambda run: (run['run_number'], run['run_attempt']), default={})
+              if latest.get('conclusion') != 'success':
+                  raise SystemExit('CI has not passed for this release SHA')
+          image = os.environ['IMAGE']
+          expected = digest(f'{image}:sha-{sha}')
+          if not expected:
+              raise SystemExit('The SHA image has not been published')
+          ensure_tag(image, version, expected)
+          print(f'Verified {version}: {sha} -> {image}@{expected}')
+          PYTHON
