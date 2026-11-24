@@ -1,4 +1,6 @@
 APPLY_FIXES: none
+# actionlint 1.7.12 predates GitHub's queue:max concurrency setting.
+ACTION_ACTIONLINT_ARGUMENTS: '-ignore ^unexpected.key..queue..for..concurrency..section'
 VALIDATE_ALL_CODEBASE: true
 FAIL_IF_MISSING_LINTER_IN_FLAVOR: true
 

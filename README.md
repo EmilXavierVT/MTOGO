@@ -13,6 +13,15 @@ Semesterprojekt: en webapplikation til bestilling og levering af mad med en doku
 - [Skabelon til flow review](docs/flow-reviews/template.md)
 
 Backend bruger Java 17 og Maven. Frontend vedligeholdes i [MTOGO-Front](https://github.com/EmilXavierVT/MTOGO-Front).
-CI kører tests og kvalitetskontroller samt en containerbaseret opstart mod PostgreSQL.
-Efter beståede checks publiceres images til Docker Hub; Watchtower opdaterer de navngivne containere på dropletten.
+CI kører tests og kvalitetskontroller. Docker/PostgreSQL-smoke er separat.
+Main-workflowet publicerer images til Docker Hub; Watchtower opdaterer de navngivne containere på dropletten.
 Backend lytter internt på port 7070. Se deploymentvejledningen for miljøværdier, smoke checks og rollback.
+
+## Lokale checks og Takt
+
+Kør ./scripts/check.sh quick under udvikling og ./scripts/check.sh verify før aflevering.
+Scriptet vælger Java 17 på macOS og bruger den versionsbundne Maven Wrapper.
+
+[Takt-vejledningen](docs/takt-workflow.md) beskriver opsætning, valgfri pre-push-hook,
+issuebaseret versionsmærkning og tidsmåling i In progress og Review.
+Automatisk Takt-aflevering kræver særskilt aktivering efter teamets PR-validering.

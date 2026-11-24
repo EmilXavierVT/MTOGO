@@ -14,27 +14,22 @@ Begræns adgang til den rigtige `.env` med filrettigheder 600.
 
 ## CI og publicering
 
-1. Backend `Backend Build & Test` kører Java 17 `mvn clean verify` med Maven-cache
-   og kontrollerer, at JaCoCo-rapporten findes. Det bevarer tests, coverage og PMD.
-   Docker-build og PostgreSQL-smoke indgår ikke i CI-jobbet.
-2. MegaLinter er ikke del af den automatiske CI, men kan køres manuelt.
-   Det samlede `CI checks`-job er fjernet. Backendens image-workflow kører separat
-   ved push til main, uafhængigt af CI-resultatet.
-3. Frontend `Frontend Build & Lint` bruger Node 24 ligesom Docker-imaget. Det kører
-   lint, tests og build samt en test af produktionssidernes og API-proxyens routing.
-   CI kører på PR'er og main; publicering kræver bestået main-CI.
-4. Image-workflows checker det valgte commit ud, publicerer `sha-<fuldt SHA>`
-   og promoverer kun til `latest`, hvis committet stadig er aktuelt main. PR-runs
-   kan ikke publicere. BuildKit-cache genbruges; publicerede images får SBOM.
-5. `Publish Versioned Release` kontrollerer tag, main-tilhørsforhold og bestået
-   main-CI og promoverer et eksisterende image ved digest. Et registry-/API-
-   problem må ikke fortolkes som et ledigt tag. Det ændrer ikke Watchtowers valgte tag.
+Backend og frontend bruger de samme verify-kommandoer lokalt og i CI. Backend
+bruger Java 17 med Maven Wrapper, Checkstyle, JUnit, PMD og JaCoCo. Frontend bruger
+Node 24 med lint, genererede routetyper, TypeScript, Vitest og produktionsbuild.
+MegaLinter kan fortsat køres manuelt; Docker/PostgreSQL-smoke er separat.
 
-Backendens main kræver ingen CI-statuschecks. Én anden persons godkendelse,
-afvisning af forældede godkendelser og afklarede reviewtråde kræves stadig.
-Reglerne gælder også administratorer; force-push og sletning afvises.
-Frontend kræver fortsat en opdateret branch og `Frontend Build & Lint` fra
-GitHub Actions, app-id 15368, samt reviewreglerne ovenfor.
+Takt er opt-in. Før aktivering bevares PR-checknavnene og de eksisterende separate
+main-publiceringsjobs. PR-runs publicerer ikke images. Branchbeskyttelse og
+credentials ændres ikke af denne kildekodeændring.
+
+Efter den dokumenterede [Takt-aktivering](takt-workflow.md#maintainer-cutover-after-team-validation)
+kører verifikation på ready-branches, hvorefter det præcise SHA fast-forwardes til main.
+Versioner bestemmes af issue-labels, og det samme image får sha- og versionstags.
+Kun aktuelt main kan promoveres til latest, som Watchtower fortsat følger.
+Den manuelle versionsworkflow genbruger samme digest og afviser overskrivning med
+et andet image. Main-beskyttelse, tokenopsætning, retry og rollback er beskrevet
+i Takt-vejledningen.
 
 ## Compose og Watchtower
 
