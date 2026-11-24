@@ -141,15 +141,29 @@ class H2SecurityIntegrationTest {
         String token = login("restaurant_owner@example.test");
         String ownPath = "/integration/restaurants/" + fixtures.restaurant();
         String otherPath = "/integration/restaurants/" + fixtures.otherRestaurant();
-        assertEquals(200, request("GET", ownPath, token, null).statusCode());
-        assertEquals(200, request("PATCH", ownPath, token, Map.of("value", "Changed address")).statusCode());
-        assertEquals("Changed address", restaurantAddress(fixtures.restaurant()));
+        HttpResponse<String> ownRestaurant = request("GET", ownPath, token, null);
+        assertEquals(200, ownRestaurant.statusCode(), ownRestaurant.body());
+        JsonNode original = mapper.readTree(ownRestaurant.body());
+        assertEquals("First restaurant", original.get("name").asText());
+        assertEquals("First address", original.get("address").asText());
+        HttpResponse<String> updatedRestaurant = request("PATCH", ownPath, token,
+                Map.of("name", "Changed restaurant", "address", "Changed address"));
+        assertEquals(200, updatedRestaurant.statusCode(), updatedRestaurant.body());
+        JsonNode updated = mapper.readTree(updatedRestaurant.body());
+        assertEquals("Changed restaurant", updated.get("name").asText());
+        assertEquals("Changed address", updated.get("address").asText());
+        assertRestaurantDetails(fixtures.restaurant(), "Changed restaurant", "Changed address");
+        JsonNode reloaded = mapper.readTree(request("GET", ownPath, token, null).body());
+        assertEquals("Changed restaurant", reloaded.get("name").asText());
+        assertEquals("Changed address", reloaded.get("address").asText());
         assertEquals(403, request("GET", otherPath, token, null).statusCode());
-        assertEquals(403, request("PATCH", otherPath, token, Map.of("value", "Forbidden")).statusCode());
-        assertEquals("Second address", restaurantAddress(fixtures.otherRestaurant()));
+        assertEquals(403, request("PATCH", otherPath, token,
+                Map.of("name", "Forbidden restaurant", "address", "Forbidden address")).statusCode());
+        assertRestaurantDetails(fixtures.otherRestaurant(), "Second restaurant", "Second address");
         String adminToken = login("admin@example.test");
-        assertEquals(403, request("PATCH", ownPath, adminToken, Map.of("value", "Admin change")).statusCode());
-        assertEquals("Changed address", restaurantAddress(fixtures.restaurant()));
+        assertEquals(403, request("PATCH", ownPath, adminToken,
+                Map.of("name", "Admin restaurant", "address", "Admin address")).statusCode());
+        assertRestaurantDetails(fixtures.restaurant(), "Changed restaurant", "Changed address");
     }
 
     @Test void existingTokensFollowDatabaseRoleChangesAndDeletedAccountsAreRejected() throws Exception {
@@ -182,8 +196,12 @@ class H2SecurityIntegrationTest {
         try (EntityManager em = emf.createEntityManager()) { return em.find(User.class, id).getName(); }
     }
 
-    private String restaurantAddress(UUID id) {
-        try (EntityManager em = emf.createEntityManager()) { return em.find(Restaurant.class, id).getAddress(); }
+    private void assertRestaurantDetails(UUID id, String name, String address) {
+        try (EntityManager em = emf.createEntityManager()) {
+            Restaurant restaurant = em.find(Restaurant.class, id);
+            assertEquals(name, restaurant.getName());
+            assertEquals(address, restaurant.getAddress());
+        }
     }
 
     private HttpResponse<String> request(String method, String path, String token, Object body) throws Exception {

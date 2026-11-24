@@ -15,6 +15,7 @@ import java.util.UUID;
 
 public final class OwnershipTestRoutes {
     public record Change(String value) {}
+    public record RestaurantChange(String name, String address) {}
     private OwnershipTestRoutes() {}
 
     public static void register(Javalin app, EntityManagerFactory emf) {
@@ -44,11 +45,13 @@ public final class OwnershipTestRoutes {
             if (restaurant == null) throw new NotFoundResponse();
             Ownership.requireRestaurantOwner(ctx.attribute("user"), restaurant.getOwner().getId());
             if (write) {
+                RestaurantChange change = ctx.bodyAsClass(RestaurantChange.class);
                 em.getTransaction().begin();
-                restaurant.setAddress(ctx.bodyAsClass(Change.class).value());
+                restaurant.setName(change.name());
+                restaurant.setAddress(change.address());
                 em.getTransaction().commit();
             }
-            ctx.json(Map.of("id", restaurant.getId(), "address", restaurant.getAddress()));
+            ctx.json(Map.of("id", restaurant.getId(), "name", restaurant.getName(), "address", restaurant.getAddress()));
         }
     }
 }
