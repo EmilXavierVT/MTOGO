@@ -78,15 +78,66 @@ class OrderServiceTest {
         var order = service.checkout(customer,
                 request(restaurantId, List.of(new OrderItemRequest(productId, 2))));
         assertEquals(app.entities.enums.Status.PENDING, order.getStatus());
+        assertEquals(new BigDecimal("4.80"), order.getCommission());
         assertEquals(1, order.getLines().size());
         assertEquals(2, order.getLines().get(0).getQuantity());
         try (var em = emf.createEntityManager()) {
             var saved = em.find(app.entities.orderFlow.Order.class, order.getId());
             assertNotNull(saved);
             assertEquals("Test address", saved.getDeliveryAddress());
+            assertEquals(new BigDecimal("4.80"), saved.getCommission());
             assertEquals(1, saved.getLines().size());
             assertEquals(0, new BigDecimal("100.00").compareTo(saved.getLines().get(0).getLineTotal()));
         }
+    }
+
+    @Test
+    void snapshotsActualPricesAndCommissionIndependentlyOfLaterMenuChanges() {
+        emf.runInTransaction(em -> em.find(Product.class, productId)
+                .setPrice(new BigDecimal("156.25")));
+        CheckoutRequest accepted = new CheckoutRequest(restaurantId,
+                List.of(new OrderItemRequest(productId, 2)), "Customer", "12345678",
+                "Test address", new BigDecimal("312.50"), PaymentSimulator.PaymentResult.APPROVED);
+
+        var order = service.checkout(customer, accepted);
+        emf.runInTransaction(em -> em.find(Product.class, productId)
+                .setPrice(new BigDecimal("200.00")));
+
+        try (var em = emf.createEntityManager()) {
+            var saved = em.find(app.entities.orderFlow.Order.class, order.getId());
+            assertEquals(new BigDecimal("312.50"), saved.getTotalPrice());
+            assertEquals(0, new BigDecimal("250.00").compareTo(saved.getNetAmount()));
+            assertEquals(new BigDecimal("13.75"), saved.getCommission());
+            assertEquals(new BigDecimal("156.25"), saved.getLines().get(0).getUnitPrice());
+            assertEquals(new BigDecimal("312.50"), saved.getLines().get(0).getLineTotal());
+        }
+    }
+
+    @Test
+    void persistsFractionalOreInTheNetBasisWithoutEarlyRounding() {
+        emf.runInTransaction(em -> em.find(Product.class, productId)
+                .setPrice(new BigDecimal("0.31")));
+        CheckoutRequest accepted = new CheckoutRequest(restaurantId,
+                List.of(new OrderItemRequest(productId, 1)), "Customer", "12345678",
+                "Test address", new BigDecimal("0.31"), PaymentSimulator.PaymentResult.APPROVED);
+
+        var order = service.checkout(customer, accepted);
+
+        try (var em = emf.createEntityManager()) {
+            var saved = em.find(app.entities.orderFlow.Order.class, order.getId());
+            assertEquals(new BigDecimal("0.31"), saved.getTotalPrice());
+            assertEquals(0, new BigDecimal("0.248").compareTo(saved.getNetAmount()));
+            assertEquals(new BigDecimal("0.01"), saved.getCommission());
+        }
+    }
+
+    @Test
+    void changedMenuPriceRequiresCustomerAcceptanceBeforeCommissionIsSaved() {
+        emf.runInTransaction(em -> em.find(Product.class, productId)
+                .setPrice(new BigDecimal("60.00")));
+
+        assertCode(409, request(restaurantId, List.of(new OrderItemRequest(productId, 2))));
+        assertNoOrders();
     }
 
     @Test
