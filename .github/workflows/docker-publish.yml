@@ -1,11 +1,14 @@
 name: Publish backend image to Docker Hub
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
     branches: [main]
+    types: [completed]
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: dockerhub-publish-main
@@ -13,44 +16,90 @@ concurrency:
 
 env:
   IMAGE: emilxvt/mtogo
+  SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
 
 jobs:
   publish:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
+      - name: Require exact-commit CI and security checks
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          for attempt in $(seq 1 60); do
+            main_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+            if [[ "$SOURCE_SHA" != "$main_sha" ]]; then
+              echo "Commit superseded on main; no image will be published."
+              exit 0
+            fi
+            ready=true
+            for workflow in ci.yml mega-linter.yml; do
+              result=$(gh api \
+                "repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs?head_sha=$SOURCE_SHA&event=push&branch=main" \
+                --jq '.workflow_runs | sort_by(.run_number, .run_attempt) | last | .conclusion // "pending"')
+              case "$result" in
+                success) ;;
+                pending) ready=false ;;
+                *) echo "::error::$workflow did not pass for $SOURCE_SHA ($result)"; exit 1 ;;
+              esac
+            done
+            if [[ "$ready" == true ]]; then
+              echo "ready=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Timed out waiting for the exact-commit checks"
+          exit 1
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: steps.gate.outputs.ready == 'true'
         with:
+          ref: ${{ env.SOURCE_SHA }}
           persist-credentials: false
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+        if: steps.gate.outputs.ready == 'true'
 
       - name: Sign in to Docker Hub
+        if: steps.gate.outputs.ready == 'true'
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and publish the commit image
+        if: steps.gate.outputs.ready == 'true'
         id: image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
         with:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ env.IMAGE }}:sha-${{ github.sha }}
+          tags: ${{ env.IMAGE }}:sha-${{ env.SOURCE_SHA }}
+          cache-from: type=gha,scope=backend
+          sbom: true
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ env.SOURCE_SHA }}
 
       - name: Update latest if the commit is still on main
+        if: steps.gate.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           DIGEST: ${{ steps.image.outputs.digest }}
         shell: bash
         run: |
           main_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
-          if [[ "$GITHUB_SHA" == "$main_sha" ]]; then
+          if [[ "$SOURCE_SHA" == "$main_sha" ]]; then
             docker buildx imagetools create --tag "$IMAGE:latest" "$IMAGE@$DIGEST"
           fi

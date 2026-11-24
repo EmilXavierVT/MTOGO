@@ -1,4 +1,4 @@
-name: Deploy Release
+name: Publish Versioned Release
 
 on:
   workflow_dispatch:
@@ -66,14 +66,15 @@ jobs:
           SHA: ${{ steps.release.outputs.sha }}
         shell: bash
         run: |
-          RUN_COUNT=$(gh api \
-            "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SHA&event=push&status=success" \
-            --jq '[.workflow_runs[] | select(.head_branch == "main" and .conclusion == "success")] | length')
-
-          if [[ "$RUN_COUNT" -eq 0 ]]; then
-            echo "::error::No successful CI run found for commit $SHA"
-            exit 1
-          fi
+          for workflow in ci.yml mega-linter.yml; do
+            result=$(gh api \
+              "repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs?head_sha=$SHA&event=push&branch=main" \
+              --jq '.workflow_runs | sort_by(.run_number, .run_attempt) | last | .conclusion // "pending"')
+            if [[ "$result" != success ]]; then
+              echo "::error::$workflow has not passed for release commit $SHA ($result)"
+              exit 1
+            fi
+          done
 
           echo "CI verified successfully for $SHA"
 

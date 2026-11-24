@@ -1,9 +1,16 @@
 name: mtogo
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:17
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_DB: mtogo
       POSTGRES_USER: mtogo
@@ -17,10 +24,11 @@ services:
       retries: 12
 
   backend:
-    image: emilxvt/mtogo:latest
-    build: "https://github.com/EmilXavierVT/MTOGO.git#main"
+    image: "${MTOGO_BACKEND_IMAGE:-emilxvt/mtogo:latest}"
+    container_name: "${MTOGO_BACKEND_CONTAINER_NAME:-mtogo-backend}"
     platform: linux/amd64
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       db:
         condition: service_healthy
@@ -30,18 +38,48 @@ services:
       DB_USERNAME: mtogo
       DB_PASSWORD: "${MTOGO_DB_PASSWORD:?Set MTOGO_DB_PASSWORD in .env}"
       CONNECTION_STR: jdbc:postgresql://db:5432/
+      SECRET_KEY: "${MTOGO_SECRET_KEY:?Set MTOGO_SECRET_KEY in .env}"
       # The JPA setting overrides the app's development schema reset.
       JAVA_TOOL_OPTIONS: -Djakarta.persistence.schema-generation.database.action=update
     ports:
-      - "${MTOGO_BIND_IP:-0.0.0.0}:${MTOGO_BACKEND_PORT:-7072}:7072"
+      - "${MTOGO_BIND_IP:-127.0.0.1}:${MTOGO_BACKEND_PORT:-7070}:7070"
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -ec
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/7070;
+          printf 'GET / HTTP/1.0\r\n\r\n' >&3;
+          read -r _protocol status _rest <&3;
+          test "$$status" = 200
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   frontend:
-    image: emilxvt/mtogo-front:latest
-    build: "https://github.com/EmilXavierVT/MTOGO-Front.git#main"
+    image: "${MTOGO_FRONTEND_IMAGE:-emilxvt/mtogo-front:latest}"
+    container_name: "${MTOGO_FRONTEND_CONTAINER_NAME:-mtogo-frontend}"
     platform: linux/amd64
     restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      backend:
+        condition: service_healthy
     ports:
-      - "${MTOGO_BIND_IP:-0.0.0.0}:${MTOGO_FRONTEND_PORT:-3000}:3000"
+      - "${MTOGO_BIND_IP:-127.0.0.1}:${MTOGO_FRONTEND_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
 volumes:
   postgres-data:
