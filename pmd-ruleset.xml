@@ -3,19 +3,82 @@
         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd"
-        name="Complexity Rules">
+        name="MTOGO Quality Rules">
 
-    <description>Checks method complexity.</description>
+    <description>
+        Code quality rules for MTOGO.
+        Priority 2 blocks builds.
+        Priority 5 is warning only.
+    </description>
 
+    <!-- BLOCKING: Complexity -->
     <rule ref="category/java/design.xml/CognitiveComplexity">
+        <priority>2</priority>
         <properties>
             <property name="reportLevel" value="15"/>
         </properties>
     </rule>
 
     <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <priority>2</priority>
         <properties>
             <property name="methodReportLevel" value="10"/>
         </properties>
     </rule>
+
+    <!-- BLOCKING: Potential bugs -->
+    <rule ref="category/java/errorprone.xml/BrokenNullCheck">
+        <priority>2</priority>
+    </rule>
+
+    <rule ref="category/java/errorprone.xml/MisplacedNullCheck">
+        <priority>2</priority>
+    </rule>
+
+    <rule ref="category/java/errorprone.xml/EmptyCatchBlock">
+        <priority>2</priority>
+    </rule>
+
+    <!-- BLOCKING: Resource management -->
+    <rule ref="category/java/errorprone.xml/CloseResource">
+        <priority>2</priority>
+        <properties>
+            <property name="allowedResourceTypes"
+                      value="java.io.ByteArrayOutputStream
+                      ,java.io.ByteArrayInputStream
+                      ,java.io.StringWriter
+                      ,java.io.CharArrayWriter
+                      ,java.util.stream.Stream
+                      ,java.util.stream.IntStream
+                      ,java.util.stream.LongStream
+                      ,java.util.stream.DoubleStream
+                      ,jakarta.persistence.EntityManagerFactory
+                      ,org.hibernate.SessionFactory
+                      ,org.hibernate.service.ServiceRegistry"/>
+        </properties>
+    </rule>
+
+
+    <!-- WARNINGS: Unused code -->
+    <rule ref="category/java/bestpractices.xml/UnusedLocalVariable">
+        <priority>5</priority>
+    </rule>
+
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod">
+        <priority>5</priority>
+    </rule>
+
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateField">
+        <priority>5</priority>
+    </rule>
+
+    <!-- WARNINGS: Final suggestions -->
+    <rule ref="category/java/codestyle.xml/LocalVariableCouldBeFinal">
+        <priority>5</priority>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/MethodArgumentCouldBeFinal">
+        <priority>5</priority>
+    </rule>
+
 </ruleset>

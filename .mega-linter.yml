@@ -1,0 +1,38 @@
+APPLY_FIXES: none
+VALIDATE_ALL_CODEBASE: true
+FAIL_IF_MISSING_LINTER_IN_FLAVOR: true
+
+JAVA_PMD_CONFIG_FILE: pmd-ruleset.xml
+JAVA_PMD_ARGUMENTS: "--minimum-priority 2"
+
+JAVA_CHECKSTYLE_CONFIG_FILE: checkstyle.xml
+YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
+
+ENABLE_LINTERS:
+  # Java
+  - JAVA_CHECKSTYLE
+  - JAVA_PMD
+
+  # GitHub Actions and CI/CD
+  - ACTION_ACTIONLINT
+  - ACTION_ZIZMOR
+  - DOCKERFILE_HADOLINT
+  - YAML_YAMLLINT
+  - JSON_JSONLINT
+  - JSON_V8R
+  - YAML_V8R
+  - BASH_SHELLCHECK
+
+  # Documentation
+  - MARKDOWN_MARKDOWNLINT
+  - XML_XMLLINT
+
+  # Security and dependencies
+  - REPOSITORY_SECRETLINT
+
+# Report findings without failing CI
+DISABLE_ERRORS_LINTERS:
+  - MARKDOWN_MARKDOWNLINT
+
+# Ignore generated/build files
+FILTER_REGEX_EXCLUDE: '(^|/)(target|node_modules|megalinter-reports)/'

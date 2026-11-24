@@ -2,10 +2,14 @@ package app;
 
 import app.config.HibernateConfig;
 import app.controller.OwnerMenuController;
+import app.controller.OrderController;
+import app.controller.RestaurantController;
 import app.dao.OwnerMenuDao;
+import app.dao.RestaurantDao;
 import app.exceptions.ApiException;
 import app.security.SecurityController;
 import app.server.Routing;
+import app.service.OrderService;
 import io.javalin.Javalin;
 import jakarta.persistence.EntityManagerFactory;
 import java.util.Map;
@@ -13,7 +17,21 @@ import java.util.Map;
 public class App {
     public static void initiate() {
         EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
-        createApp(emf, System.getenv("SECRET_KEY")).start(7070);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (emf.isOpen()) {
+                emf.close();
+            }
+        }));
+
+        try {
+            createApp(emf, System.getenv("SECRET_KEY")).start(7070);
+        } catch (RuntimeException | Error e) {
+            if (emf.isOpen()) {
+                emf.close();
+            }
+            throw e;
+        }
     }
 
     public static Javalin createApp(EntityManagerFactory emf, String secret) {
@@ -25,7 +43,8 @@ public class App {
         app.exception(ApiException.class, (e, ctx) -> ctx.status(e.getCode()).json(Map.of("error", e.getMessage())));
         app.beforeMatched(security::authenticate);
         app.beforeMatched(security::authorize);
-        Routing.registerRoutes(app, security, new OwnerMenuController(new OwnerMenuDao(emf)));
+        Routing.registerRoutes(app, security, new OwnerMenuController(new OwnerMenuDao(emf)),
+                new RestaurantController(new RestaurantDao(emf)), new OrderController(new OrderService(emf)));
         return app;
     }
 }
