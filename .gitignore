@@ -8,6 +8,13 @@
 
 
 *.properties
+!.mvn/wrapper/maven-wrapper.properties
+
+# Local Takt state and Python caches
+.tt_cache
+_temp.token
+__pycache__/
+release-plan.json
 
 # User-specific stuff
 .idea/**/workspace.xml
