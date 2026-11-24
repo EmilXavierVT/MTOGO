@@ -73,7 +73,7 @@ Docker Compose starter backend, frontend og database med vedvarende databasedata
 
 Hver ugedemo får en versionsmærket release, fx `0.1.0`, `0.2.0` og `0.3.0`. Under 0.x bruges ny minorversion til et nyt funktionelt inkrement og patchversion til rettelser; praksis og eventuelle kompatibilitetsbrud beskrives i releasenoter. Versionsnumre oprettes først, når der faktisk findes en release.
 
-Bestået main-CI publicerer et image for det præcise commit; backend kræver også bestået MegaLinter.
+Backend publicerer et image for det præcise commit ved push til main, uafhængigt af CI. Frontend publicerer efter bestået main-CI.
 Kun det aktuelle main-commit promoveres til det latest-tag, Watchtower følger.
 Versionsmærkede demoreleases publiceres manuelt gennem GitHub Actions ved at promovere samme image-digest.
 Smoke check og rollback er dokumenteret i deploymentvejledningen.
