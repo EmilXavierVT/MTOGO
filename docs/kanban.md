@@ -69,10 +69,14 @@ Hold et flow review på 30 minutter hver uge med fire deltagere (2 persontimer i
 
 ## Deployment og releases
 
-Docker Compose skal kunne starte backend, frontend og database med vedvarende databasedata. Hosting er uafklaret; et konkret mål og adgang er en første afklaringsopgave. Miljøværdier og hemmeligheder lægges uden for Git; dokumentation viser kun navne og ufølsomme eksempler.
+Docker Compose starter backend, frontend og database med vedvarende databasedata. Applikationen hostes på dropletten bag Caddy. Miljøværdier og hemmeligheder lægges uden for Git; dokumentation viser kun navne og ufølsomme eksempler. Se [deploymentvejledningen](deployment.md).
 
 Hver ugedemo får en versionsmærket release, fx `0.1.0`, `0.2.0` og `0.3.0`. Under 0.x bruges ny minorversion til et nyt funktionelt inkrement og patchversion til rettelser; praksis og eventuelle kompatibilitetsbrud beskrives i releasenoter. Versionsnumre oprettes først, når der faktisk findes en release.
 
-Deployment startes manuelt gennem GitHub Actions efter bestået CI og skal bruge den præcise version, som er kontrolleret. Dokumenter start, smoke check, gendannelse/genudrulning af tidligere version og håndtering af vedvarende data. En tilbageførsel af kode må ikke antage, at databasedata kan nedgraderes automatisk.
+Bestået main-CI publicerer et image for det præcise commit; backend kræver også bestået MegaLinter.
+Kun det aktuelle main-commit promoveres til det latest-tag, Watchtower følger.
+Versionsmærkede demoreleases publiceres manuelt gennem GitHub Actions ved at promovere samme image-digest.
+Smoke check og rollback er dokumenteret i deploymentvejledningen.
+En tilbageførsel af kode må ikke antage, at databasedata kan nedgraderes automatisk.
 
 Ved vejledning vises inkrement, versionsnummer, board, målinger, forbedringseksperiment, build/tests, statisk analyse, coverage og kendte mangler. Vis faktisk evidens; denne plan er ikke evidens for implementering.
