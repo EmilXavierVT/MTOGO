@@ -1,14 +1,8 @@
 name: Publish backend image to Docker Hub
 
 on:
-  workflow_call:
-    inputs:
-      source_sha:
-        required: true
-        type: string
-    secrets:
-      DOCKERHUB_TOKEN:
-        required: true
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -19,17 +13,15 @@ concurrency:
 
 env:
   IMAGE: emilxvt/mtogo
-  SOURCE_SHA: ${{ inputs.source_sha }}
+  SOURCE_SHA: ${{ github.sha }}
 
 jobs:
   publish:
-    if: >-
-      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-      inputs.source_sha == github.sha
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - name: Confirm the verified commit is current main
+      - name: Confirm the commit is current main
         id: gate
         env:
           GH_TOKEN: ${{ github.token }}
@@ -42,7 +34,7 @@ jobs:
             echo "Commit superseded on main; no image will be published."
           fi
 
-      - name: Checkout verified commit
+      - name: Checkout commit
         if: steps.gate.outputs.ready == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -60,7 +52,7 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and publish verified image
+      - name: Build and publish image
         if: steps.gate.outputs.ready == 'true'
         id: image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc

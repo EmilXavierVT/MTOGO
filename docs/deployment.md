@@ -14,27 +14,27 @@ Begræns adgang til den rigtige `.env` med filrettigheder 600.
 
 ## CI og publicering
 
-1. Backend `Backend Build & Test` kører Java 17 `mvn clean verify`, gemmer test-,
-   coverage- og PMD-rapporter, bygger produktionsimaget og starter det med PostgreSQL.
-   Smoke-testen kræver HTTP 200 på `/` og 401 på `/api/auth/me` uden token.
-2. CI kalder MegaLinter som en genbrugelig workflow. `CI checks` kræver, at både
-   backend-jobbet og statisk analyse består. Image-jobbet afhænger direkte af dette
-   resultat for samme commit; det bruger ingen privilegeret `workflow_run`-trigger.
+1. Backend `Backend Build & Test` kører Java 17 `mvn clean verify` med Maven-cache
+   og kontrollerer, at JaCoCo-rapporten findes. Det bevarer tests, coverage og PMD.
+   Docker-build og PostgreSQL-smoke indgår ikke i CI-jobbet.
+2. MegaLinter er ikke del af den automatiske CI, men kan køres manuelt.
+   Det samlede `CI checks`-job er fjernet. Backendens image-workflow kører separat
+   ved push til main, uafhængigt af CI-resultatet.
 3. Frontend `Frontend Build & Lint` bruger Node 24 ligesom Docker-imaget. Det kører
    lint, tests og build samt en test af produktionssidernes og API-proxyens routing.
    CI kører på PR'er og main; publicering kræver bestået main-CI.
-4. Image-workflows checker det verificerede commit ud, publicerer `sha-<fuldt SHA>`
+4. Image-workflows checker det valgte commit ud, publicerer `sha-<fuldt SHA>`
    og promoverer kun til `latest`, hvis committet stadig er aktuelt main. PR-runs
    kan ikke publicere. BuildKit-cache genbruges; publicerede images får SBOM.
-5. `Publish Versioned Release` kontrollerer tag, main-tilhørsforhold og begge
-   samlede main-CI og promoverer et eksisterende image ved digest. Et registry-/API-
+5. `Publish Versioned Release` kontrollerer tag, main-tilhørsforhold og bestået
+   main-CI og promoverer et eksisterende image ved digest. Et registry-/API-
    problem må ikke fortolkes som et ledigt tag. Det ændrer ikke Watchtowers valgte tag.
 
-Main beskyttes i begge repos med opdateret branch, krævede GitHub Actions-checks,
-én anden persons godkendelse, afvisning af forældede godkendelser og afklarede
-reviewtråde. Reglerne gælder også administratorer; force-push og sletning afvises.
-Backend kræver `CI checks`, som omfatter build, PostgreSQL-smoke og MegaLinter;
-frontend kræver `Frontend Build & Lint`. Check-kilden er GitHub Actions, app-id 15368.
+Backendens main kræver ingen CI-statuschecks. Én anden persons godkendelse,
+afvisning af forældede godkendelser og afklarede reviewtråde kræves stadig.
+Reglerne gælder også administratorer; force-push og sletning afvises.
+Frontend kræver fortsat en opdateret branch og `Frontend Build & Lint` fra
+GitHub Actions, app-id 15368, samt reviewreglerne ovenfor.
 
 ## Compose og Watchtower
 
