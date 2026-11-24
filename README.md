@@ -8,6 +8,7 @@ Semesterprojekt: en webapplikation til bestilling og levering af mad med en doku
 - [Kanban, kvalitetskrav og releases](docs/kanban.md)
 - [Prioriteret backlog](docs/backlog.md)
 - [Menuadministration i API](docs/owner-menu-api.md)
+- [Kundens checkout og ordrebekræftelse](docs/customer-checkout-api.md)
 - [GitHub Projects](https://github.com/users/EmilXavierVT/projects/7)
 - [Skabelon til flow review](docs/flow-reviews/template.md)
 

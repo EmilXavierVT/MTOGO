@@ -7,6 +7,7 @@ import app.controller.RestaurantController;
 import app.dao.OwnerMenuDao;
 import app.dao.RestaurantDao;
 import app.exceptions.ApiException;
+import app.exceptions.CheckoutException;
 import app.security.SecurityController;
 import app.server.Routing;
 import app.service.OrderService;
@@ -38,9 +39,9 @@ public class App {
         SecurityController security = new SecurityController(emf, secret);
         Javalin app = Javalin.create(config -> {
             config.showJavalinBanner = false;
-            config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.allowHost("http://localhost:5173")));
         });
         app.exception(ApiException.class, (e, ctx) -> ctx.status(e.getCode()).json(Map.of("error", e.getMessage())));
+        app.exception(CheckoutException.class, (e, ctx) -> ctx.status(e.getCode()).json(e.getResponse()));
         app.beforeMatched(security::authenticate);
         app.beforeMatched(security::authorize);
         Routing.registerRoutes(app, security, new OwnerMenuController(new OwnerMenuDao(emf)),
