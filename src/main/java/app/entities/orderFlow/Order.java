@@ -46,12 +46,12 @@ public class Order {
     @Column(name = "delivery_address", nullable = false)
     private String deliveryAddress;
 
-    // DKK uden moms
-    @Column(name = "net_amount", nullable = false)
+    // DKK uden moms: priser i hele øre / 1,25 kan give tre decimaler.
+    @Column(name = "net_amount", nullable = false, precision = 13, scale = 3)
     private BigDecimal netAmount;
 
 
-    @Column(name = "commission", nullable = false)
+    @Column(name = "commission", nullable = false, precision = 12, scale = 2)
     private BigDecimal commission;
 
     @ManyToOne(optional = false)

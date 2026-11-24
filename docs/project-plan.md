@@ -78,7 +78,13 @@ provision = afrund_til_øre(x * r(x))
 bonus = afrund_til_øre(provision * 0.20), kun ved gennemført levering
 ```
 
-På det lineære interval svarer satsen i procent til `f(x) = -x/300 + 19/3`. Der er intet yderligere servicegebyr. Beregningen anvender decimalbeløb og bevarer præcision frem til afrunding af provisionsbeløbet. Penge afrundes til to decimaler; den konkrete afrundingsregel dokumenteres og bruges konsekvent i implementeringen.
+På det lineære interval svarer satsen i procent til `f(x) = -x/300 + 19/3`. Der er intet yderligere servicegebyr. Beregningen anvender `BigDecimal` og bevarer præcision frem til afrunding af provisionsbeløbet. Penge afrundes til to decimaler med `RoundingMode.HALF_UP`: et præcist halvt øre rundes op, fx 0,015 kr. → 0,02 kr.
+
+`CommissionService.calculate(netAmount)` afviser manglende og negative beløb, også negative brøkdele af et øre. På det lineære interval beregnes det ækvivalente udtryk `x * (1900 - x) / 30000`, hvor divisionen først afrundes på det endelige provisionsbeløb. Dermed afrundes hverken netbeløbet eller den gentagne decimal i satsen tidligt.
+
+Checkout bruger de validerede menupriser inklusive 25 % moms og de bestilte antal. Totalen divideres præcist med 1,25 før provisionsberegningen. Netgrundlaget gemmes med tre decimaler i `orders.net_amount`, og provisionen med to i `orders.commission`. Eksempel: 0,31 kr. inklusive moms giver 0,248 kr. eksklusive moms og 0,01 kr. i provision; afrunding af netgrundlaget til 0,25 kr. først ville fejlagtigt give 0,02 kr. Senere menuændringer ændrer ikke de gemte ordrebeløb.
+
+Kør [opgraderingen af provisionskolonnerne](migrations/issue-36-commission-precision.sql) før deployment mod en eksisterende PostgreSQL-database. Den bevarer historiske beløb; allerede afrundede netgrundlag og tidligere provisioner genberegnes ikke. På en tom database opretter Hibernate de nye kolonnetyper. Behold Compose-indstillingen til schema-update ved opstart, så eksisterende data bevares.
 
 | Ordreværdi ekskl. moms | Sats | Provision | Bonus ved levering |
 | --- | --- | --- | --- |

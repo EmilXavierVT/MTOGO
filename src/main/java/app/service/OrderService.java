@@ -61,7 +61,7 @@ public class OrderService {
             Map<UUID, Product> validatedProducts = loadValidatedProducts(em, request);
 
             PricingService.PricingResult pricing =
-                    pricingService.calculate(request.products());
+                    pricingService.calculate(request.products(), validatedProducts);
 
             if (pricing.total().compareTo(request.acceptedTotal()) != 0) {
                 throw new ApiException(
@@ -79,7 +79,7 @@ public class OrderService {
 
             for (OrderController.OrderItemRequest item : request.products()) {
                 Product product = validatedProducts.get(item.productId());
-                addOrderLine(order, product, item.quantity(), pricingService.unitPrice());
+                addOrderLine(order, product, item.quantity(), product.getPrice());
             }
 
 
