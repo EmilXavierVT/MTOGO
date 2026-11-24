@@ -9,11 +9,11 @@ Semesterprojekt: en webapplikation til bestilling og levering af mad med en doku
 - [Prioriteret backlog](docs/backlog.md)
 - [Menuadministration i API](docs/owner-menu-api.md)
 - [Kundens checkout og ordrebekræftelse](docs/customer-checkout-api.md)
+- [CI, deployment og gendannelse](docs/deployment.md)
 - [GitHub Projects](https://github.com/users/EmilXavierVT/projects/7)
 - [Skabelon til flow review](docs/flow-reviews/template.md)
 
-Planen er godkendt efter projektinterviewet den 10. november 2026. Den beskriver det aftalte arbejde; funktioner, tests, CI og deployment er endnu ikke implementeret som følge af denne dokumentationsændring.
-
-Repositoryet indeholder allerede et Java-skelet og en Maven-konfiguration. Den eksisterende Discord-workflow er en notifikation, ikke applikationens CI. React, Docker Compose og leveringspipeline indgår i backloggen.
-
-Hosting og teamets konkrete arbejdsfordeling skal afklares ved opstart. Ingen personer eller afleveringsdatoer er antaget.
+Backend bruger Java 17 og Maven. Frontend vedligeholdes i [MTOGO-Front](https://github.com/EmilXavierVT/MTOGO-Front).
+CI kører tests og kvalitetskontroller samt en containerbaseret opstart mod PostgreSQL.
+Efter beståede checks publiceres images til Docker Hub; Watchtower opdaterer de navngivne containere på dropletten.
+Backend lytter internt på port 7070. Se deploymentvejledningen for miljøværdier, smoke checks og rollback.

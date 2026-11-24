@@ -39,6 +39,7 @@ public class App {
         SecurityController security = new SecurityController(emf, secret);
         Javalin app = Javalin.create(config -> {
             config.showJavalinBanner = false;
+            config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
         });
         app.exception(ApiException.class, (e, ctx) -> ctx.status(e.getCode()).json(Map.of("error", e.getMessage())));
         app.exception(CheckoutException.class, (e, ctx) -> ctx.status(e.getCode()).json(e.getResponse()));

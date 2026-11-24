@@ -2,7 +2,7 @@
 
 B18 / [issue #52](https://github.com/EmilXavierVT/MTOGO/issues/52). Frontend starter checkout fra kurven og viser efter succes `/customer/orders/{orderId}`. Alle nedenstående API-kald kræver kundens bearer-token.
 
-Webappen bruger sin eksisterende samme-origin `/api`-proxy til backend. Den tidligere CORS-regel for port 5173 er fjernet: den gav fejlstatus på Next.js-appens videresendte browserkald, selv når handleren allerede havde kørt. API'et giver ingen CORS-tilladelse til direkte kald fra en anden browser-origin. Integrationstestene sender en realistisk `Origin`-header gennem login og checkout.
+Webappen bruger sin eksisterende samme-origin `/api`-proxy til backend. Branchens appkonfiguration følger den aktuelle CORS-konfiguration fra `main`. Integrationstestene sender en realistisk `Origin`-header gennem login og checkout.
 
 ## Opret ordre
 

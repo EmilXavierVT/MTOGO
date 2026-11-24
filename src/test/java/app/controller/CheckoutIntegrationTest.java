@@ -43,9 +43,11 @@ class CheckoutIntegrationTest {
         emf = H2TestDatabase.create();
         fixtures = SecurityTestData.populate(emf);
         emf.runInTransaction(em -> {
+            Restaurant restaurant = em.find(Restaurant.class, fixtures.restaurant());
+            restaurant.setName("Checkout restaurant");
             Menu menu = new Menu();
             menu.setName("Lunch");
-            menu.setRestaurant(em.find(Restaurant.class, fixtures.restaurant()));
+            menu.setRestaurant(restaurant);
             em.persist(menu);
             Product product = new Product();
             product.setMenu(menu);
@@ -72,7 +74,7 @@ class CheckoutIntegrationTest {
         String token = login("customer@example.test");
         JsonNode created = json(201, request("POST", ORDERS, token, checkout("100.00", "APPROVED")));
         assertEquals("PENDING", created.get("status").asText());
-        assertEquals("Restaurant at First address", created.at("/restaurant/name").asText());
+        assertEquals("Checkout restaurant", created.at("/restaurant/name").asText());
         assertEquals("Customer at checkout", created.get("customerName").asText());
         assertEquals("12345678", created.get("customerPhone").asText());
         assertEquals("Delivery address", created.get("deliveryAddress").asText());
