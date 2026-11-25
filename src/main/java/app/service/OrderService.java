@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -100,6 +101,21 @@ public class OrderService {
                     .setParameter("customerId", user.id())
                     .getResultList().stream().findFirst()
                     .orElseThrow(() -> new ApiException(404, "Order not found"));
+        }
+    }
+
+    public List<Order> findCustomerOrders(SecurityController.CurrentUser user) {
+        requireCustomer(user);
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery("""
+                    select distinct o from Order o
+                    join fetch o.restaurant
+                    left join fetch o.lines
+                    where o.customer.id = :customerId
+                    order by o.orderTime desc, o.id desc
+                    """, Order.class)
+                    .setParameter("customerId", user.id())
+                    .getResultList();
         }
     }
 

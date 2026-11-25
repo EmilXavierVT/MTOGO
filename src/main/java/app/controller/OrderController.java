@@ -35,14 +35,17 @@ public class OrderController {
     }
     public record OrderResponse(UUID id, Status status, BigDecimal total, String orderTime,
                                 RestaurantResponse restaurant, String customerName,
-                                String customerPhone, String deliveryAddress, List<LineResponse> lines) {
+                                String customerPhone, String deliveryAddress, List<LineResponse> lines,
+                                BigDecimal refundedAmount, String refundedAt) {
         private static OrderResponse from(Order order) {
             var restaurant = order.getRestaurant();
             return new OrderResponse(order.getId(), order.getStatus(), order.getTotalPrice(),
                     order.getOrderTime().toString(),
                     new RestaurantResponse(restaurant.getId(), restaurant.getName(), restaurant.getAddress()),
                     order.getCustomerName(), order.getCustomerPhone(), order.getDeliveryAddress(),
-                    order.getLines().stream().map(LineResponse::from).toList());
+                    order.getLines().stream().map(LineResponse::from).toList(),
+                    order.getRefundedAmount(),
+                    order.getRefundedAt() == null ? null : order.getRefundedAt().toString());
         }
     }
     public record RestaurantTransitionResponse(UUID id, Status status, BigDecimal refundedAmount,
@@ -77,6 +80,12 @@ public class OrderController {
         }
         ctx.header("Cache-Control", "no-store");
         ctx.json(OrderResponse.from(orderService.findCustomerOrder(customer, orderId)));
+    }
+
+    public void listCustomerOrders(Context ctx) {
+        SecurityController.CurrentUser customer = ctx.attribute("user");
+        ctx.header("Cache-Control", "no-store");
+        ctx.json(orderService.findCustomerOrders(customer).stream().map(OrderResponse::from).toList());
     }
 
     public void acceptRestaurantOrder(Context ctx) {
