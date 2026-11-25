@@ -30,4 +30,6 @@ jobs:
           java-version: '17'
           cache: maven
       - name: Verify application and delivery tooling
+        env:
+          MVNW_VERBOSE: 'true'
         run: ./scripts/check.sh verify
