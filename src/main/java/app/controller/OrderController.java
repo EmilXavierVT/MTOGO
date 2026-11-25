@@ -45,6 +45,13 @@ public class OrderController {
                     order.getLines().stream().map(LineResponse::from).toList());
         }
     }
+    public record RestaurantTransitionResponse(UUID id, Status status, BigDecimal refundedAmount,
+                                               String refundedAt) {
+        private static RestaurantTransitionResponse from(Order order) {
+            return new RestaurantTransitionResponse(order.getId(), order.getStatus(), order.getRefundedAmount(),
+                    order.getRefundedAt() == null ? null : order.getRefundedAt().toString());
+        }
+    }
 
     public OrderController(OrderService orderService){
         this.orderService = orderService;
@@ -70,5 +77,31 @@ public class OrderController {
         }
         ctx.header("Cache-Control", "no-store");
         ctx.json(OrderResponse.from(orderService.findCustomerOrder(customer, orderId)));
+    }
+
+    public void acceptRestaurantOrder(Context ctx) {
+        transition(ctx, Status.ACCEPTED);
+    }
+
+    public void rejectRestaurantOrder(Context ctx) {
+        transition(ctx, Status.REJECTED);
+    }
+
+    public void readyRestaurantOrder(Context ctx) {
+        transition(ctx, Status.READY_FOR_DELIVERY);
+    }
+
+    private void transition(Context ctx, Status target) {
+        UUID orderId;
+        try {
+            String value = ctx.pathParam("orderId");
+            orderId = UUID.fromString(value);
+            if (!orderId.toString().equalsIgnoreCase(value)) throw new IllegalArgumentException();
+        } catch (IllegalArgumentException e) {
+            throw new ApiException(400, "orderId must be a UUID");
+        }
+        SecurityController.CurrentUser owner = ctx.attribute("user");
+        ctx.header("Cache-Control", "no-store");
+        ctx.json(RestaurantTransitionResponse.from(orderService.transitionRestaurantOrder(owner, orderId, target)));
     }
 }

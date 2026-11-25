@@ -168,6 +168,38 @@ class CheckoutIntegrationTest {
         json(400, request("GET", ORDERS + "/1-1-1-1-1", token, null));
     }
 
+    @Test
+    void restaurantOwnerCanAcceptAndReadyOwnOrderOnly() throws Exception {
+        JsonNode created = json(201, request("POST", ORDERS, login("customer@example.test"), checkout("100.00", "APPROVED")));
+        String path = "/api/owner/orders/" + created.get("id").asText();
+        String owner = login("restaurant_owner@example.test");
+        json(401, request("POST", path + "/accept", null, null));
+        json(403, request("POST", path + "/accept", login("customer@example.test"), null));
+        json(403, request("POST", path + "/accept", login("other-owner@example.test"), null));
+        json(400, request("POST", "/api/owner/orders/not-a-uuid/accept", owner, null));
+        assertEquals("ACCEPTED", json(200, request("POST", path + "/accept", owner, null)).get("status").asText());
+        json(409, request("POST", path + "/reject", owner, null));
+        assertEquals("READY_FOR_DELIVERY", json(200, request("POST", path + "/ready", owner, null)).get("status").asText());
+        json(409, request("POST", path + "/ready", owner, null));
+    }
+
+    @Test
+    void restaurantRejectionIsPersistedAndCannotBeRepeated() throws Exception {
+        JsonNode created = json(201, request("POST", ORDERS, login("customer@example.test"), checkout("100.00", "APPROVED")));
+        String path = "/api/owner/orders/" + created.get("id").asText();
+        String owner = login("restaurant_owner@example.test");
+        JsonNode rejected = json(200, request("POST", path + "/reject", owner, null));
+        assertEquals("REJECTED", rejected.get("status").asText());
+        assertEquals(0, new BigDecimal("100.00").compareTo(rejected.get("refundedAmount").decimalValue()));
+        assertFalse(rejected.get("refundedAt").isNull());
+        json(409, request("POST", path + "/reject", owner, null));
+        try (var em = emf.createEntityManager()) {
+            var order = em.find(app.entities.orderFlow.Order.class, UUID.fromString(created.get("id").asText()));
+            assertEquals(new BigDecimal("100.00"), order.getRefundedAmount());
+            assertEquals(new BigDecimal("4.80"), order.getCommission());
+        }
+    }
+
     private String checkout(String total, String paymentResult) throws Exception {
         return mapper.writeValueAsString(Map.of("restaurantId", fixtures.restaurant(),
                 "products", List.of(Map.of("productId", productId, "quantity", 2)),
