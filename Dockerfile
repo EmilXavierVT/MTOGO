@@ -12,5 +12,5 @@ WORKDIR /app
 COPY --from=build /build/app.jar ./app.jar
 COPY --from=build /build/lib ./lib
 USER 10001:10001
-EXPOSE 7070
+EXPOSE 7070 9464
 ENTRYPOINT ["java", "-cp", "app.jar:lib/*", "app.Main"]
