@@ -22,6 +22,7 @@
         <hamcrest.version>2.2</hamcrest.version>
         <postgresql.version>42.7.2</postgresql.version>
         <hibernate-version>7.1.0.Final</hibernate-version>
+        <prometheus.version>1.10.0</prometheus.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -32,6 +33,21 @@
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
             <version>${javalin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-core</artifactId>
+            <version>${prometheus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-instrumentation-jvm</artifactId>
+            <version>${prometheus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-exporter-httpserver</artifactId>
+            <version>${prometheus.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
