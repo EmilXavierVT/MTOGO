@@ -54,7 +54,6 @@ public class Order {
     @Column(name = "commission", nullable = false, precision = 12, scale = 2)
     private BigDecimal commission;
 
-    // A refund is recorded once when the restaurant rejects a paid order.
     @Column(name = "refunded_amount", precision = 12, scale = 2)
     private BigDecimal refundedAmount;
 
