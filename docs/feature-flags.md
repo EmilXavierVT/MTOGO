@@ -4,9 +4,11 @@ Research date: **26 November 2026**. Deliverable for [MTOGO #111](https://github
 
 Recommend application-owned, global Boolean release flags, evaluated by the backend from environment values read once at startup. Configuration changes take effect through container recreation. This fits the chosen requirement to integrate unfinished work while controlling when users receive it, without operating a flag service. This is a project-specific design inference, not a measured performance or cost result.
 
-Issue #111 delivers this cited report and follow-up specification. Runtime support, real flag enrollment, frontend changes and production configuration are follow-up work. The interface, endpoint, keys and configuration examples below are **proposals, not implemented contracts**. The team policies are recommendations; this report does not change the agreed Definition of Done.
+Issue #111 delivered this cited report and follow-up specification. The runtime foundation is tracked in [backend #112](https://github.com/EmilXavierVT/MTOGO/issues/112) and [frontend #17](https://github.com/EmilXavierVT/MTOGO-Front/issues/17); see the [implemented runtime contract](feature-flags-runtime.md). Real product flag enrollment remains separate. The original design below records the research proposals; current implementation details are in the runtime contract. The team policies are recommendations; this report does not change the agreed Definition of Done.
 
 ## Context and alternatives
+
+This section describes the research snapshot before the runtime foundation was added.
 
 The backend uses Java 17 and Javalin 6.1.3, constructs dependencies in `App`, and registers routes centrally. It has no capability endpoint in the inspected routing. The actual frontend is Next.js 16.4.6 App Router with React 19.3.0, using same-origin `/api` requests and Bearer tokens. Sources: [backend dependencies](../pom.xml), [composition](../src/main/java/app/App.java), [routes](../src/main/java/app/server/Routing.java), [frontend dependencies](https://github.com/EmilXavierVT/MTOGO-Front/blob/2e0853f6c55007618bc9524bfda74468e14a3e12/package.json), [App Router API consumer](https://github.com/EmilXavierVT/MTOGO-Front/blob/2e0853f6c55007618bc9524bfda74468e14a3e12/app/%28pages%29/customer/api.js).
 

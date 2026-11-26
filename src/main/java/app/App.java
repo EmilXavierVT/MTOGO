@@ -2,6 +2,7 @@ package app;
 
 import app.config.HibernateConfig;
 import app.controller.DeliveryController;
+import app.controller.FeatureController;
 import app.controller.OwnerMenuController;
 import app.controller.OrderController;
 import app.controller.RestaurantController;
@@ -10,6 +11,9 @@ import app.dao.OwnerMenuDao;
 import app.dao.RestaurantDao;
 import app.exceptions.ApiException;
 import app.exceptions.CheckoutException;
+import app.features.EnvironmentFeatureFlags;
+import app.features.FeatureCatalog;
+import app.features.FeatureFlags;
 import app.security.SecurityController;
 import app.server.BackendMetrics;
 import app.server.Routing;
@@ -46,6 +50,17 @@ public class App {
     }
 
     private static Javalin createApp(EntityManagerFactory emf, String secret, Integer metricsPort) {
+        FeatureCatalog catalog = FeatureCatalog.APPLICATION;
+        return createApp(emf, secret, metricsPort, catalog,
+                EnvironmentFeatureFlags.fromEnvironment(catalog.registered()));
+    }
+
+    public static Javalin createApp(EntityManagerFactory emf, String secret, FeatureCatalog catalog, FeatureFlags flags) {
+        return createApp(emf, secret, null, catalog, flags);
+    }
+
+    private static Javalin createApp(EntityManagerFactory emf, String secret, Integer metricsPort,
+                                     FeatureCatalog catalog, FeatureFlags flags) {
         SecurityController security = new SecurityController(emf, secret);
         Javalin app = Javalin.create(config -> {
             config.showJavalinBanner = false;
@@ -60,7 +75,7 @@ public class App {
         app.beforeMatched(security::authorize);
         Routing.registerRoutes(app, security, new OwnerMenuController(new OwnerMenuDao(emf)),
                 new RestaurantController(new RestaurantDao(emf)), new OrderController(new OrderService(emf)),
-                new DeliveryController(new DeliveryService(emf, new OrderDao())));
+                new DeliveryController(new DeliveryService(emf, new OrderDao())), new FeatureController(flags, catalog));
         return app;
     }
 }

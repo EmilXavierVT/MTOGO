@@ -32,6 +32,9 @@ Automatisk Takt-aflevering kræver særskilt aktivering efter teamets PR-valider
 til at styre, hvornår deployede funktioner bliver tilgængelige. Noten indeholder
 forslag til implementering og teampolitik samt opfølgende opgaver i begge repositories.
 
+[Flag-systemets runtime-kontrakt](docs/feature-flags-runtime.md) beskriver det
+implementerede fundament, API, frontend-integration og registrering af det første produktflag.
+
 ## Overvågning med Prometheus og Grafana
 
 Kopiér `.env.example` til `.env`, hvis filen ikke findes. Udfyld

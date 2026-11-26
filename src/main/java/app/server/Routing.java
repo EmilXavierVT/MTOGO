@@ -1,6 +1,7 @@
 package app.server;
 
 import app.controller.DeliveryController;
+import app.controller.FeatureController;
 import app.controller.OrderController;
 import app.controller.OwnerMenuController;
 import app.controller.RestaurantController;
@@ -13,11 +14,13 @@ public final class Routing {
     private Routing() {}
 
     public static void registerRoutes(Javalin app, SecurityController security, OwnerMenuController ownerMenus,
-                                      RestaurantController restaurant, OrderController orders, DeliveryController deliveries) {
+                                      RestaurantController restaurant, OrderController orders, DeliveryController deliveries,
+                                      FeatureController features) {
         SystemController.addRoutes(app);
         app.post("/api/auth/login", security::login);
         app.post("/api/auth/register", security::register);
         app.get("/api/auth/me", security::me, Role.values());
+        app.get("/api/features", features::show, Role.values());
         app.get("/api/owner/menus", ownerMenus::listMenus, Role.RESTAURANT_OWNER);
         app.post("/api/owner/menus/{menuId}/products", ownerMenus::createProduct, Role.RESTAURANT_OWNER);
         app.put("/api/owner/menus/{menuId}/products/{productId}", ownerMenus::updateProduct, Role.RESTAURANT_OWNER);

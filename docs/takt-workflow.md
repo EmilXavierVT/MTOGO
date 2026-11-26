@@ -102,6 +102,10 @@ the proposed application flags control runtime feature availability. Takt delive
 and image version tags remain evidence of integration, while a feature's enabled
 demonstration must satisfy its own acceptance criteria.
 
+The [runtime foundation](feature-flags-runtime.md) implements configuration, guards
+and the browser capability contract. Its production registry starts empty; the first
+product flag and its enabled demonstration belong to a separate issue.
+
 ## Issue time
 
 The shared MTOGO board uses **Backlog**, **In progress**, **In review** and **Done**.
