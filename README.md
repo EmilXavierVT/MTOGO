@@ -28,6 +28,10 @@ Scriptet vælger Java 17 på macOS og bruger den versionsbundne Maven Wrapper.
 issuebaseret versionsmærkning og tidsmåling i In progress og Review.
 Automatisk Takt-aflevering kræver særskilt aktivering efter teamets PR-validering.
 
+[Research om feature flags](docs/feature-flags.md) beskriver den anbefalede løsning
+til at styre, hvornår deployede funktioner bliver tilgængelige. Noten indeholder
+forslag til implementering og teampolitik samt opfølgende opgaver i begge repositories.
+
 ## Overvågning med Prometheus og Grafana
 
 Kopiér `.env.example` til `.env`, hvis filen ikke findes. Udfyld
