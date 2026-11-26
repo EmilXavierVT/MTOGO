@@ -6,6 +6,7 @@ import app.entities.enums.Status;
 import app.entities.orderFlow.Order;
 import app.entities.orderFlow.OrderLine;
 import app.security.SecurityController;
+import app.security.Ownership;
 import app.entities.enums.Role;
 import app.entities.restaurant.Product;
 import app.entities.restaurant.Restaurant;
@@ -18,6 +19,7 @@ import jakarta.persistence.EntityManagerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -99,6 +101,56 @@ public class OrderService {
                     .getResultList().stream().findFirst()
                     .orElseThrow(() -> new ApiException(404, "Order not found"));
         }
+    }
+
+    public Order transitionRestaurantOrder(SecurityController.CurrentUser user, UUID orderId, Status target) {
+        requireRestaurantTransition(user, orderId, target);
+        return emf.callInTransaction(em -> {
+            Order order = orderDao.findForUpdate(em, orderId);
+            if (order == null) {
+                throw new ApiException(404, "Order not found");
+            }
+            Ownership.requireRestaurantOwner(user, order.getRestaurant().getOwner().getId());
+            Status current = order.getStatus();
+            if (!allowedRestaurantTransition(current, target)) {
+                throw new ApiException(409, "Invalid restaurant order transition");
+            }
+            if (target == Status.REJECTED) {
+                order.setRefundedAmount(order.getTotalPrice());
+                order.setRefundedAt(LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
+                // Commission is a checkout quote, not a charge; no courier bonus is accrued here.
+            }
+            order.setStatus(target);
+            return order;
+        });
+    }
+
+    private static void requireRestaurantTransition(SecurityController.CurrentUser user, UUID orderId, Status target) {
+        requireRestaurantOwnerActor(user);
+        if (orderId == null || target == null) {
+            throw new ApiException(400, "Order ID and target status are required");
+        }
+        if (!restaurantTarget(target)) {
+            throw new ApiException(400, "Unsupported restaurant order status");
+        }
+    }
+
+    private static void requireRestaurantOwnerActor(SecurityController.CurrentUser user) {
+        if (user == null || user.id() == null) {
+            throw new ApiException(401, "Authentication required");
+        }
+        if (user.role() != Role.RESTAURANT_OWNER) {
+            throw new ApiException(403, "Restaurant owner required");
+        }
+    }
+
+    private static boolean restaurantTarget(Status target) {
+        return target == Status.ACCEPTED || target == Status.REJECTED || target == Status.READY_FOR_DELIVERY;
+    }
+
+    private static boolean allowedRestaurantTransition(Status current, Status target) {
+        return (current == Status.PENDING && (target == Status.ACCEPTED || target == Status.REJECTED))
+                || (current == Status.ACCEPTED && target == Status.READY_FOR_DELIVERY);
     }
 
     private static void requireCustomer(SecurityController.CurrentUser user) {
