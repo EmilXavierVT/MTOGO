@@ -86,6 +86,10 @@ public class OrderService {
     }
 
     public Order findCustomerOrder(SecurityController.CurrentUser user, UUID orderId) {
+        return getCustomerOrder(user, orderId);
+    }
+
+    public Order getCustomerOrder(SecurityController.CurrentUser user, UUID orderId) {
         requireCustomer(user);
         try (EntityManager em = emf.createEntityManager()) {
             return em.createQuery("""

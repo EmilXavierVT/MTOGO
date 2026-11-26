@@ -10,6 +10,7 @@ import app.dao.OwnerMenuDao;
 import app.dao.RestaurantDao;
 import app.exceptions.ApiException;
 import app.exceptions.CheckoutException;
+import app.exceptions.PriceChangedException;
 import app.security.SecurityController;
 import app.server.BackendMetrics;
 import app.server.Routing;
@@ -55,6 +56,8 @@ public class App {
             }
         });
         app.exception(ApiException.class, (e, ctx) -> ctx.status(e.getCode()).json(Map.of("error", e.getMessage())));
+        app.exception(PriceChangedException.class, (e, ctx) -> ctx.status(e.getCode()).json(Map.of(
+                "error", e.getMessage(), "updatedTotal", e.getUpdatedTotal())));
         app.exception(CheckoutException.class, (e, ctx) -> ctx.status(e.getCode()).json(e.getResponse()));
         app.beforeMatched(security::authenticate);
         app.beforeMatched(security::authorize);

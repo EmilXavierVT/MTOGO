@@ -2,6 +2,7 @@ package app.controller;
 import app.entities.orderFlow.Order;
 import app.entities.enums.Status;
 import app.entities.orderFlow.OrderLine;
+import app.entities.restaurant.Restaurant;
 import app.exceptions.ApiException;
 import app.security.SecurityController;
 import io.javalin.http.Context;
@@ -25,7 +26,11 @@ public class OrderController {
             BigDecimal acceptedTotal,
             PaymentResult simulatedPaymentResult
     ) {}
-    public record RestaurantResponse(UUID id, String name, String address) {}
+    public record RestaurantResponse(UUID id, String name, String address) {
+        public static RestaurantResponse from(Restaurant restaurant) {
+            return new RestaurantResponse(restaurant.getId(), restaurant.getName(), restaurant.getAddress());
+        }
+    }
     public record LineResponse(UUID productId, String productName, int quantity,
                                BigDecimal unitPrice, BigDecimal lineTotal) {
         private static LineResponse from(OrderLine line) {
@@ -40,7 +45,7 @@ public class OrderController {
             var restaurant = order.getRestaurant();
             return new OrderResponse(order.getId(), order.getStatus(), order.getTotalPrice(),
                     order.getOrderTime().toString(),
-                    new RestaurantResponse(restaurant.getId(), restaurant.getName(), restaurant.getAddress()),
+                    RestaurantResponse.from(restaurant),
                     order.getCustomerName(), order.getCustomerPhone(), order.getDeliveryAddress(),
                     order.getLines().stream().map(LineResponse::from).toList());
         }
@@ -59,6 +64,10 @@ public class OrderController {
     }
 
     public void showConfirmation(Context ctx) {
+        getOrder(ctx);
+    }
+
+    public void getOrder(Context ctx) {
         SecurityController.CurrentUser customer = ctx.attribute("user");
         String value = ctx.pathParam("orderId");
         UUID orderId;
@@ -69,6 +78,6 @@ public class OrderController {
             throw new ApiException(400, "orderId must be a UUID");
         }
         ctx.header("Cache-Control", "no-store");
-        ctx.json(OrderResponse.from(orderService.findCustomerOrder(customer, orderId)));
+        ctx.json(OrderResponse.from(orderService.getCustomerOrder(customer, orderId)));
     }
 }
