@@ -1,4 +1,8 @@
 APPLY_FIXES: none
+# actionlint 1.7.12 predates queue:max and native issue-status events.
+ACTION_ACTIONLINT_ARGUMENTS: >-
+  -ignore ^unexpected.key..queue..for..concurrency..section
+  -ignore ^invalid.activity.type..status_changed..for..issues..Webhook.event
 VALIDATE_ALL_CODEBASE: true
 FAIL_IF_MISSING_LINTER_IN_FLAVOR: true
 

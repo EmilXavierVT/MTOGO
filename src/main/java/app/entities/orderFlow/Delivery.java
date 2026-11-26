@@ -24,13 +24,16 @@ public class Delivery {
     @Column(name = "status", nullable = false)
     private Status status;
 
-    @Column(nullable = false)
     private LocalDateTime deliveryTime;
+
+    private LocalDateTime pickupTime;
+
+    private LocalDateTime claimedTime;
 
     @OneToOne(optional = false)
     private Order order;
 
-    @OneToOne(optional = false)
+    @ManyToOne(optional = false)
     private Courier courier;
 
 

@@ -6,13 +6,12 @@ import app.entities.enums.Status;
 import app.entities.orderFlow.Order;
 import app.entities.orderFlow.OrderLine;
 import app.security.SecurityController;
-import app.security.Ownership;
 import app.entities.enums.Role;
 import app.entities.restaurant.Product;
 import app.entities.restaurant.Restaurant;
 import app.entities.users.User;
 import app.exceptions.ApiException;
-import app.exceptions.PriceChangedException;
+import app.exceptions.CheckoutException;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -42,12 +41,7 @@ public class OrderService {
     }
 
     public Order checkout(SecurityController.CurrentUser user, OrderController.CheckoutRequest request){
-        if (user == null || user.id() == null) {
-            throw new ApiException(401, "Authentication required");
-        }
-        if (user.role() != Role.CUSTOMER) {
-            throw new ApiException(403, "Only customers can checkout");
-        }
+        requireCustomer(user);
         validateRequest(request);
 
         // Any exception rolls back the order and every order line.
@@ -66,7 +60,11 @@ public class OrderService {
                     pricingService.calculate(request.products(), validatedProducts);
 
             if (pricing.total().compareTo(request.acceptedTotal()) != 0) {
-                throw new PriceChangedException(pricing.total());
+                throw CheckoutException.priceChanged(pricing.total(), request.products().stream()
+                        .map(item -> validatedProducts.get(item.productId()))
+                        .map(product -> new CheckoutException.ItemPrice(
+                                product.getId(), product.getName(), product.getPrice()))
+                        .toList());
             }
 
             if (paymentSimulator.simulate(request.simulatedPaymentResult())
@@ -87,21 +85,28 @@ public class OrderService {
         });
     }
 
-    public Order getCustomerOrder(SecurityController.CurrentUser user, UUID orderId) {
+    public Order findCustomerOrder(SecurityController.CurrentUser user, UUID orderId) {
+        requireCustomer(user);
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery("""
+                    select o from Order o
+                    join fetch o.restaurant
+                    left join fetch o.lines
+                    where o.id = :orderId and o.customer.id = :customerId
+                    """, Order.class)
+                    .setParameter("orderId", orderId)
+                    .setParameter("customerId", user.id())
+                    .getResultList().stream().findFirst()
+                    .orElseThrow(() -> new ApiException(404, "Order not found"));
+        }
+    }
+
+    private static void requireCustomer(SecurityController.CurrentUser user) {
         if (user == null || user.id() == null) {
             throw new ApiException(401, "Authentication required");
         }
         if (user.role() != Role.CUSTOMER) {
-            throw new ApiException(403, "Access denied");
-        }
-        try (EntityManager em = emf.createEntityManager()) {
-            Order order = em.createQuery(
-                    "select o from Order o join fetch o.restaurant where o.id = :orderId", Order.class)
-                    .setParameter("orderId", orderId)
-                    .getResultStream().findFirst()
-                    .orElseThrow(() -> new ApiException(404, "Order not found"));
-            Ownership.requireCustomer(user, order.getCustomer().getId());
-            return order;
+            throw new ApiException(403, "Only customers can access customer orders");
         }
     }
 
@@ -115,13 +120,13 @@ public class OrderService {
         for (OrderController.OrderItemRequest item : sortedItems) {
             Product product = em.find(Product.class, item.productId(), LockModeType.PESSIMISTIC_WRITE);
             if (product == null) {
-                throw new ApiException(404, "Product not found: " + item.productId());
+                throw CheckoutException.unavailableProduct(item.productId(), true);
             }
             if (!product.getMenu().getRestaurant().getId().equals(request.restaurantId())) {
                 throw new ApiException(400, "All products must belong to the selected restaurant");
             }
             if (!product.isAvailable()) {
-                throw new ApiException(409, "Product is unavailable: " + item.productId());
+                throw CheckoutException.unavailableProduct(item.productId(), false);
             }
             products.put(product.getId(), product);
         }

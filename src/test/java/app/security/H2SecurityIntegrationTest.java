@@ -93,8 +93,10 @@ class H2SecurityIntegrationTest {
         String token = login("customer@example.test");
         String[] parts = token.split("\\.");
         String forged = parts[0] + "." + parts[1] + "." + (parts[2].startsWith("A") ? "B" : "A") + parts[2].substring(1);
-        assertEquals(401, request("GET", "/api/auth/me", forged, null).statusCode());
-        assertEquals(200, request("GET", "/api/auth/me", token, null).statusCode());
+        HttpResponse<String> forgedResponse = request("GET", "/api/auth/me", forged, null);
+        assertEquals(401, forgedResponse.statusCode(), forgedResponse.body());
+        HttpResponse<String> validResponse = request("GET", "/api/auth/me", token, null);
+        assertEquals(200, validResponse.statusCode(), validResponse.body());
     }
 
     @Test void loginForEveryRoleEnforcesRoleMatrix() throws Exception {

@@ -1,15 +1,19 @@
 package app;
 
 import app.config.HibernateConfig;
+import app.controller.DeliveryController;
 import app.controller.OwnerMenuController;
 import app.controller.OrderController;
 import app.controller.RestaurantController;
+import app.dao.OrderDao;
 import app.dao.OwnerMenuDao;
 import app.dao.RestaurantDao;
 import app.exceptions.ApiException;
-import app.exceptions.PriceChangedException;
+import app.exceptions.CheckoutException;
 import app.security.SecurityController;
+import app.server.BackendMetrics;
 import app.server.Routing;
+import app.service.DeliveryService;
 import app.service.OrderService;
 import io.javalin.Javalin;
 import jakarta.persistence.EntityManagerFactory;
@@ -26,7 +30,9 @@ public class App {
         }));
 
         try {
-            createApp(emf, System.getenv("SECRET_KEY")).start(7070);
+            String metricsPort = System.getenv("MTOGO_METRICS_PORT");
+            createApp(emf, System.getenv("SECRET_KEY"), metricsPort == null ? null : Integer.valueOf(metricsPort))
+                    .start(7070);
         } catch (RuntimeException | Error e) {
             if (emf.isOpen()) {
                 emf.close();
@@ -36,23 +42,25 @@ public class App {
     }
 
     public static Javalin createApp(EntityManagerFactory emf, String secret) {
+        return createApp(emf, secret, null);
+    }
+
+    private static Javalin createApp(EntityManagerFactory emf, String secret, Integer metricsPort) {
         SecurityController security = new SecurityController(emf, secret);
         Javalin app = Javalin.create(config -> {
             config.showJavalinBanner = false;
             config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
-        });
-        app.exception(ApiException.class, (e, ctx) -> {
-            if (e instanceof PriceChangedException changed) {
-                ctx.status(e.getCode()).json(Map.of("error", e.getMessage(),
-                        "updatedTotal", changed.getUpdatedTotal()));
-            } else {
-                ctx.status(e.getCode()).json(Map.of("error", e.getMessage()));
+            if (metricsPort != null) {
+                BackendMetrics.configure(config, metricsPort);
             }
         });
+        app.exception(ApiException.class, (e, ctx) -> ctx.status(e.getCode()).json(Map.of("error", e.getMessage())));
+        app.exception(CheckoutException.class, (e, ctx) -> ctx.status(e.getCode()).json(e.getResponse()));
         app.beforeMatched(security::authenticate);
         app.beforeMatched(security::authorize);
         Routing.registerRoutes(app, security, new OwnerMenuController(new OwnerMenuDao(emf)),
-                new RestaurantController(new RestaurantDao(emf)), new OrderController(new OrderService(emf)));
+                new RestaurantController(new RestaurantDao(emf)), new OrderController(new OrderService(emf)),
+                new DeliveryController(new DeliveryService(emf, new OrderDao())));
         return app;
     }
 }

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -69,6 +70,11 @@ class CustomerOrderIntegrationTest {
         assertEquals(fixtures.restaurant().toString(), created.get("restaurant").get("id").asText());
 
         JsonNode loaded = json(200, request("GET", "/api/customer/orders/" + created.get("id").asText(), token, null));
+        assertTrue(Math.abs(java.time.Duration.between(
+                LocalDateTime.parse(created.get("orderTime").asText()),
+                LocalDateTime.parse(loaded.get("orderTime").asText())).toNanos()) <= 1_000);
+        ((com.fasterxml.jackson.databind.node.ObjectNode) created).remove("orderTime");
+        ((com.fasterxml.jackson.databind.node.ObjectNode) loaded).remove("orderTime");
         assertEquals(created, loaded);
     }
 
@@ -78,8 +84,8 @@ class CustomerOrderIntegrationTest {
         String other = login("other-customer@example.test");
         String id = json(201, request("POST", "/api/customer/orders", owner, checkout("100.00")))
                 .get("id").asText();
-        JsonNode error = json(403, request("GET", "/api/customer/orders/" + id, other, null));
-        assertEquals("Access denied", error.get("error").asText());
+        JsonNode error = json(404, request("GET", "/api/customer/orders/" + id, other, null));
+        assertEquals("Order not found", error.get("error").asText());
     }
 
     @Test
@@ -106,7 +112,8 @@ class CustomerOrderIntegrationTest {
     void changedPriceReturnsStructuredTotalAndKeepsError() throws Exception {
         JsonNode error = json(409, request("POST", "/api/customer/orders",
                 login("customer@example.test"), checkout("99.00")));
-        assertEquals("Total changed. Accept the updated total: 100.00", error.get("error").asText());
+        assertEquals("PRICE_CHANGED", error.get("code").asText());
+        assertEquals("Total changed. Accept the updated total before paying.", error.get("error").asText());
         assertEquals(0, new BigDecimal("100.00").compareTo(error.get("updatedTotal").decimalValue()));
         try (var em = emf.createEntityManager()) {
             assertEquals(0L, em.createQuery("select count(o) from Order o", Long.class).getSingleResult());

@@ -6,5 +6,7 @@ public enum Status {
     REJECTED,
     UNDER_DELIVERY,
     DELIVERED,
-    CANCELLED
+    CANCELLED,
+    CLAIMED,
+    READY_FOR_DELIVERY
 }
