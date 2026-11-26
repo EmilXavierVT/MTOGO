@@ -84,8 +84,9 @@ direct API guards, normal ordering/completion and error/latency dashboards. Enab
 disabling preserves already saved ratings. An open browser handles stale API denial; re-enter
 the page to refresh capabilities. No polling or zero-downtime activation is promised.
 
-This implementation is delivered default OFF. Production activation is a separate operating
-decision; local enabled evidence does not claim a production rollout. On retirement, retain
+The application default remains OFF. Production was explicitly activated on 26 November
+2026 through [rollout #113](operations/customer-feedback-production-2026-11-26.md), including
+same-image rollback and authenticated browser/API verification. On retirement, retain
 `customerFeedback: true` while supported older clients still consume it.
 
 ## Verification
@@ -116,4 +117,5 @@ expired login, duplicate recovery, lost response recovery, order changes and ent
   **1.42 DKK** throughout. All five existing deployment smoke checks passed locally.
 - Frontend quick checks passed 96 tests, lint and TypeScript. The
   [saved-result screenshot](https://github.com/EmilXavierVT/MTOGO-Front/blob/main/docs/images/customer-feedback-enabled.jpg)
-  uses only fictitious local data. Production activation was not performed.
+  uses only fictitious local data. This local demonstration did not change production;
+  the subsequent production activation is recorded separately above.
