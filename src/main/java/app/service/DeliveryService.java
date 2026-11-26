@@ -12,6 +12,7 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.LockModeType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class DeliveryService {
@@ -20,6 +21,30 @@ public class DeliveryService {
     public DeliveryService(EntityManagerFactory emf, OrderDao orderDao) {
         this.emf = emf;
         this.orderDao = orderDao;
+    }
+
+    public List<Order> availableOrders(SecurityController.CurrentUser user) {
+        requireCourier(user);
+        return emf.callInTransaction(em -> em.createQuery("""
+                select o from Order o join fetch o.restaurant
+                where o.status = :ready
+                and not exists (select d.id from Delivery d where d.order = o)
+                order by o.orderTime, o.id
+                """, Order.class)
+                .setParameter("ready", Status.READY_FOR_DELIVERY)
+                .getResultList());
+    }
+
+    public Delivery activeDelivery(SecurityController.CurrentUser user) {
+        requireCourier(user);
+        return emf.callInTransaction(em -> em.createQuery("""
+                select d from Delivery d join fetch d.order o join fetch o.restaurant
+                where d.courier.id = :courierId and d.status in (:claimed, :underDelivery)
+                """, Delivery.class)
+                .setParameter("courierId", user.id())
+                .setParameter("claimed", Status.CLAIMED)
+                .setParameter("underDelivery", Status.UNDER_DELIVERY)
+                .getSingleResultOrNull());
     }
 
     public Delivery acceptDelivery(SecurityController.CurrentUser user, UUID orderId) {
