@@ -130,6 +130,68 @@ class CourierDeliveryIntegrationTest {
     }
 
     @Test
+    void completingADeliveryEarnsTwentyPercentOfItsSavedCommission() throws Exception {
+        String courier = login("first-courier@example.test");
+        Map<String, String> examples = Map.of("0.00", "0.00", "0.02", "0.00", "0.03", "0.01",
+                "6.00", "1.20", "13.75", "2.75", "23.33", "4.67", "30.08", "6.02", "30.00", "6.00");
+        for (var example : examples.entrySet()) {
+            UUID orderId = order(Status.READY_FOR_DELIVERY, LocalDateTime.now());
+            emf.runInTransaction(em -> em.find(Order.class, orderId).setCommission(new BigDecimal(example.getKey())));
+            JsonNode claimed = json(201, request("POST", action(orderId, "accept"), courier));
+            json(200, request("POST", action(orderId, "pickup"), courier));
+
+            JsonNode delivered = json(200, request("POST", action(orderId, "delivered"), courier));
+
+            assertEquals("DELIVERED", delivered.path("status").asText());
+            assertEquals(claimed.get("courierId"), delivered.get("courierId"));
+            assertEquals(new BigDecimal(example.getValue()), delivered.path("earnedBonus").decimalValue().setScale(2),
+                    "Bonus for saved commission " + example.getKey());
+        }
+    }
+
+    @Test
+    void bonusRequiresCompletionByTheAssignedCourierAndCannotBeEarnedAgain() throws Exception {
+        String courier = login("first-courier@example.test");
+        String otherCourier = login("second-courier@example.test");
+        UUID orderId = order(Status.READY_FOR_DELIVERY, LocalDateTime.now());
+        JsonNode claimed = json(201, request("POST", action(orderId, "accept"), courier));
+        assertTrue(claimed.path("earnedBonus").isNull());
+        json(409, request("POST", action(orderId, "delivered"), courier));
+        JsonNode pickedUp = json(200, request("POST", action(orderId, "pickup"), courier));
+        assertTrue(pickedUp.path("earnedBonus").isNull());
+        json(403, request("POST", action(orderId, "delivered"), otherCourier));
+
+        JsonNode delivered = json(200, request("POST", action(orderId, "delivered"), courier));
+        assertEquals(claimed.get("courierId"), delivered.get("courierId"));
+        assertEquals(new BigDecimal("0.96"), delivered.path("earnedBonus").decimalValue().setScale(2));
+        json(409, request("POST", action(orderId, "delivered"), courier));
+        json(403, request("POST", action(orderId, "delivered"), otherCourier));
+        assertEquals(204, request("GET", ACTIVE, courier).statusCode());
+    }
+
+    @Test
+    void rejectedOrderCannotEarnBonusEvenIfItsDeliveryStillLooksPickedUp() throws Exception {
+        String courier = login("first-courier@example.test");
+        UUID orderId = order(Status.READY_FOR_DELIVERY, LocalDateTime.now());
+        json(201, request("POST", action(orderId, "accept"), courier));
+        json(200, request("POST", action(orderId, "pickup"), courier));
+        emf.runInTransaction(em -> em.find(Order.class, orderId).setStatus(Status.REJECTED));
+
+        json(409, request("POST", action(orderId, "delivered"), courier));
+    }
+
+    @Test
+    void rejectedOrderCannotBePickedUpToMakeItEligibleForBonus() throws Exception {
+        String courier = login("first-courier@example.test");
+        UUID orderId = order(Status.READY_FOR_DELIVERY, LocalDateTime.now());
+        json(201, request("POST", action(orderId, "accept"), courier));
+        emf.runInTransaction(em -> em.find(Order.class, orderId).setStatus(Status.REJECTED));
+
+        json(409, request("POST", action(orderId, "pickup"), courier));
+        json(409, request("POST", action(orderId, "delivered"), courier));
+    }
+
+    @Test
     void eachCourierReadsOnlyTheirOwnActiveDelivery() throws Exception {
         String first = login("first-courier@example.test");
         String second = login("second-courier@example.test");

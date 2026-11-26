@@ -8,14 +8,18 @@ import app.entities.orderFlow.Order;
 import app.entities.users.Courier;
 import app.exceptions.ApiException;
 import app.security.SecurityController;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.LockModeType;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 public class DeliveryService {
+    private static final BigDecimal BONUS_RATE = new BigDecimal("0.20");
     private final EntityManagerFactory emf;
     private final OrderDao orderDao;
     public DeliveryService(EntityManagerFactory emf, OrderDao orderDao) {
@@ -109,18 +113,11 @@ public class DeliveryService {
                 throw new ApiException(404, "Order not found");
             }
 
-            Delivery delivery = em.createQuery("""
-                    select d from Delivery d where d.order.id = :orderId
-                    """, Delivery.class)
-                    .setParameter("orderId", orderId)
-                    .getSingleResultOrNull();
-            if (delivery == null) {
-                throw new ApiException(409, "Order has no delivery assignment");
-            }
+            Delivery delivery = deliveryForOrder(em, orderId);
             if (!user.id().equals(delivery.getCourier().getId())) {
                 throw new ApiException(403, "Only the assigned courier can pick up this delivery");
             }
-            if (delivery.getStatus() != Status.CLAIMED) {
+            if (order.getStatus() != Status.READY_FOR_DELIVERY || delivery.getStatus() != Status.CLAIMED) {
                 throw new ApiException(409, "Delivery is not awaiting pickup");
             }
 
@@ -152,18 +149,12 @@ public class DeliveryService {
                 throw new ApiException(404, "Order not found");
             }
 
-            Delivery delivery = em.createQuery("""
-                    select d from Delivery d where d.order.id = :orderId
-                    """, Delivery.class)
-                    .setParameter("orderId", orderId)
-                    .getSingleResultOrNull();
-            if (delivery == null) {
-                throw new ApiException(409, "Order has no delivery assignment");
-            }
+            Delivery delivery = deliveryForOrder(em, orderId);
             if (!user.id().equals(delivery.getCourier().getId())) {
                 throw new ApiException(403, "Only the assigned courier can mark this delivery as delivered");
             }
-            if (delivery.getStatus() != Status.UNDER_DELIVERY || delivery.getPickupTime() == null) {
+            if (order.getStatus() != Status.UNDER_DELIVERY
+                    || delivery.getStatus() != Status.UNDER_DELIVERY || delivery.getPickupTime() == null) {
                 throw new ApiException(409, "Delivery must be picked up before it can be marked as delivered");
             }
 
@@ -171,12 +162,25 @@ public class DeliveryService {
             if (deliveryTime.isBefore(delivery.getPickupTime())) {
                 throw new ApiException(409, "Delivery time cannot be before pickup time");
             }
+            delivery.setEarnedBonus(order.getCommission().multiply(BONUS_RATE).setScale(2, RoundingMode.HALF_UP));
             order.setStatus(Status.DELIVERED);
             delivery.setStatus(Status.DELIVERED);
             delivery.setDeliveryTime(deliveryTime);
 
             return delivery;
         });
+    }
+
+    private static Delivery deliveryForOrder(EntityManager em, UUID orderId) {
+        Delivery delivery = em.createQuery("""
+                select d from Delivery d where d.order.id = :orderId
+                """, Delivery.class)
+                .setParameter("orderId", orderId)
+                .getSingleResultOrNull();
+        if (delivery == null) {
+            throw new ApiException(409, "Order has no delivery assignment");
+        }
+        return delivery;
     }
 
     private static void requireCourier(SecurityController.CurrentUser user) {

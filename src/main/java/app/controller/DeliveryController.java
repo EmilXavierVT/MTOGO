@@ -9,6 +9,7 @@ import app.security.SecurityController;
 import app.service.DeliveryService;
 import io.javalin.http.Context;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -41,13 +42,13 @@ public class DeliveryController {
     }
 
     public record DeliveryResponse(UUID id, UUID orderId, UUID courierId, Status status,
-                                   String claimedTime, String pickupTime, String deliveryTime) {
+                                   String claimedTime, String pickupTime, String deliveryTime, BigDecimal earnedBonus) {
         private static DeliveryResponse from(Delivery delivery) {
             return new DeliveryResponse(delivery.getId(), delivery.getOrder().getId(),
                     delivery.getCourier().getId(), delivery.getStatus(),
                     Objects.toString(delivery.getClaimedTime(), null),
                     Objects.toString(delivery.getPickupTime(), null),
-                    Objects.toString(delivery.getDeliveryTime(), null));
+                    Objects.toString(delivery.getDeliveryTime(), null), delivery.getEarnedBonus());
         }
     }
 

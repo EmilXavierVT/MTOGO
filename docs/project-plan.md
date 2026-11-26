@@ -99,6 +99,13 @@ Det lille fald i provisionsbeløb fra 950 til 1.000 kr. er accepteret som en kon
 
 Bonus optjenes én gang pr. gennemført levering og tilhører det tildelte bud. Gentagne kald må ikke give gentagen optjening. Ratings påvirker ikke bonus. Beregnet provision ved bestilling adskilles fra opkrævet provision og optjent bonus ved afslutning.
 
+Optjeningen gemmes som `deliveries.earned_bonus` i DKK med to decimaler, i samme
+transaktion som `DELIVERED` og leveringstidspunktet. Den beregnes ud fra den gemte,
+afrundede `orders.commission`. En ordrelås serialiserer konkurrerende afslutninger;
+gentagelser afvises med `409`. Før afslutning er beløbet `null`; ældre leveringer
+efterberegnes ikke ved opgraderingen. Feltet registrerer optjening og udløser ingen
+lønudbetaling. Se [leverings-API og PostgreSQL-verifikation](courier-delivery-api.md).
+
 Bæredygtighed vurderes med eksplicitte omkostningsantagelser, bidrag efter bonus og break-even. 80 % tilbage før øvrige omkostninger er ikke i sig selv bevis for overskud. Eksempler og følsomhed skal fremgå, og antagne omkostninger må ikke fremstilles som faktiske virksomhedsdata.
 
 ## Feedback

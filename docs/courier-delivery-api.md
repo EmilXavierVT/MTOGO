@@ -55,8 +55,34 @@ Tidsfelterne er eksisterende backend-`LocalDateTime` i ISO-format uden offset.
 Et umiddelbart POST-svar kan have nanosekundpræcision; PostgreSQL gemmer
 mikrosekunder. HTTP-testen tillader derfor under én mikrosekunds forskel ved
 første genindlæsning og kræver identiske værdier ved efterfølgende læsninger.
-De eksisterende POST-svar beholder deres kontrakt: `id`, `orderId`, `courierId`,
-`status`, `claimedTime`, `pickupTime`, `deliveryTime`.
+POST-svar indeholder `id`, `orderId`, `courierId`, `status`, `claimedTime`,
+`pickupTime`, `deliveryTime` og `earnedBonus`.
+
+## Bonus ved gennemført levering
+
+[#59](https://github.com/EmilXavierVT/MTOGO/issues/59) knytter optjeningen til
+den tildelte levering. `earnedBonus` er et JSON-tal i DKK med to decimaler:
+20 % af ordrenes allerede afrundede, gemte `commission`, afrundet med
+`RoundingMode.HALF_UP`. Fx giver provision 23,33 kr. en bonus på 4,67 kr.
+Netgrundlag, aktuelle menupriser og ratings bruges ikke til at genberegne bonus.
+
+Ved overtagelse og afhentning er `earnedBonus` `null`. Kun en gyldig overgang
+til `DELIVERED` gemmer beløbet, samtidig med ordre-/leveringsstatus og
+leveringstidspunkt. Optjeningen tilhører leveringens `courierId`; requesten
+kan hverken vælge modtager eller bonusbeløb. Afviste og uafsluttede ordrer
+giver ingen optjening.
+
+Afslutningen låser ordren i databasen. Gentagne eller konkurrerende
+afslutningskald giver én succes og derefter `409`; det gemte beløb og
+leveringstidspunkt ændres ikke. Bonus gemmes én gang på leveringen, så
+forskellige leveringer ikke opdaterer en fælles budsaldos tæller.
+`deliveries.earned_bonus` er optjent bonus, ikke en registreret lønudbetaling.
+Det ældre, ubrugte `Courier.bonus`-felt er ikke kilde til denne optjening.
+
+Schemaændringen tilføjer en nullable `numeric(12,2)`-kolonne. Eksisterende
+schema-update ved opstart kan tilføje den; tidligere gennemførte leveringer
+beholder `null` og får ikke automatisk efterbetalt bonus. En tom database
+får kolonnen via Hibernate.
 
 ## Verifikation
 
@@ -66,8 +92,12 @@ ejerskab, genindlæsning, afhentning/levering, konflikter og rollegrænser.
 CI og Takt-verifikation kører disse tests mod en isoleret PostgreSQL 17-service.
 Lokalt bruges H2, medmindre `MTOGO_COURIER_TEST_JDBC_URL` er sat som nedenfor.
 De eksisterende `DeliveryServiceTest` og `DeliveryClaimConcurrencyTest` bruger
-fortsat H2. HTTP-testene er ikke dokumentation for en PostgreSQL-samtidighedstest.
-Ingen schemaændring er nødvendig for denne udvidelse.
+fortsat H2. `DeliveryBonusConcurrencyTest` kræver PostgreSQL og springes over,
+når testforbindelsen ikke er sat. Den venter, til to afslutningskald faktisk
+venter på PostgreSQL-låse, og kræver én optjening samt én `409`-konflikt.
+Den fremprovokerer også en databasefejl under afslutning og kontrollerer,
+at status, leveringstid og bonus rulles tilbage samlet, hvorefter et nyt
+afslutningskald kan lykkes.
 
 ```sh
 ./mvnw -Dtest=CourierDeliveryIntegrationTest test
@@ -86,7 +116,7 @@ docker run --detach --rm --name mtogo-courier-test \
   --env POSTGRES_USER=courier_test --env POSTGRES_PASSWORD=courier_test postgres:17
 docker exec mtogo-courier-test pg_isready -U courier_test -d mtogo_courier_test
 MTOGO_COURIER_TEST_JDBC_URL=jdbc:postgresql://localhost:18573/mtogo_courier_test \
-  ./mvnw -Dtest=CourierDeliveryIntegrationTest test
+  ./mvnw -Dtest=CourierDeliveryIntegrationTest,DeliveryBonusConcurrencyTest test
 docker stop mtogo-courier-test
 ```
 
