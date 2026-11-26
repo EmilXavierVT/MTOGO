@@ -27,6 +27,7 @@ public final class Routing {
         app.get("/api/restaurants", restaurant :: displayRestaurants, Role.CUSTOMER);
         app.get("/api/restaurants/{restaurantId}/menus", restaurant :: displayRestaurantMenus, Role.CUSTOMER);
         app.post("/api/customer/orders", orders :: handleCheckout, Role.CUSTOMER);
+        app.get("/api/customer/orders", orders::listCustomerOrders, Role.CUSTOMER);
         app.get("/api/customer/orders/{orderId}", orders::showConfirmation, Role.CUSTOMER);
         app.post("/api/owner/orders/{orderId}/accept", orders::acceptRestaurantOrder, Role.RESTAURANT_OWNER);
         app.post("/api/owner/orders/{orderId}/reject", orders::rejectRestaurantOrder, Role.RESTAURANT_OWNER);

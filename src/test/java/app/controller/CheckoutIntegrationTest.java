@@ -3,6 +3,8 @@ package app.controller;
 import app.App;
 import app.config.H2TestDatabase;
 import app.entities.enums.Role;
+import app.entities.enums.Status;
+import app.entities.orderFlow.Order;
 import app.entities.restaurant.Menu;
 import app.entities.restaurant.Product;
 import app.entities.restaurant.Restaurant;
@@ -22,6 +24,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -198,6 +201,83 @@ class CheckoutIntegrationTest {
             assertEquals(new BigDecimal("100.00"), order.getRefundedAmount());
             assertEquals(new BigDecimal("4.80"), order.getCommission());
         }
+    }
+
+    @Test
+    void historyIsEmptyAndRequiresCustomerAuthentication() throws Exception {
+        String customer = login("customer@example.test");
+        JsonNode empty = json(200, request("GET", ORDERS, customer, null));
+        assertEquals(0, empty.size());
+        json(401, request("GET", ORDERS, null, null));
+        for (String role : List.of("courier", "admin", "restaurant_owner")) {
+            json(403, request("GET", ORDERS, login(role + "@example.test"), null));
+        }
+    }
+
+    @Test
+    void historyContainsOnlyOwnOrdersNewestFirstAndSavedSnapshots() throws Exception {
+        String customer = login("customer@example.test");
+        JsonNode older = json(201, request("POST", ORDERS, customer, checkout("100.00", "APPROVED")));
+        JsonNode newer = json(201, request("POST", ORDERS, customer, checkout("100.00", "APPROVED")));
+        json(201, request("POST", ORDERS, login("other-customer@example.test"), checkout("100.00", "APPROVED")));
+        UUID olderId = UUID.fromString(older.get("id").asText());
+        UUID newerId = UUID.fromString(newer.get("id").asText());
+        emf.runInTransaction(em -> {
+            em.find(Order.class, olderId).setOrderTime(LocalDateTime.of(2026, 1, 1, 12, 0));
+            em.find(Order.class, newerId).setOrderTime(LocalDateTime.of(2026, 1, 2, 12, 0));
+            Product product = em.find(Product.class, productId);
+            product.setName("Changed dish");
+            product.setPrice(new BigDecimal("200.00"));
+            product.setAvailable(false);
+        });
+        HttpResponse<String> response = request("GET", ORDERS, customer, null);
+        JsonNode history = json(200, response);
+        assertEquals("no-store", response.headers().firstValue("Cache-Control").orElseThrow());
+        assertEquals(2, history.size());
+        assertEquals(newer.get("id"), history.get(0).get("id"));
+        assertEquals(older.get("id"), history.get(1).get("id"));
+        for (JsonNode order : history) {
+            assertEquals("Burger", order.at("/lines/0/productName").asText());
+            assertEquals(2, order.at("/lines/0/quantity").asInt());
+            assertEquals(0, new BigDecimal("50.00").compareTo(order.at("/lines/0/unitPrice").decimalValue()));
+            assertEquals(0, new BigDecimal("100.00").compareTo(order.get("total").decimalValue()));
+            assertEquals(order, json(200, request("GET", ORDERS + "/" + order.get("id").asText(), customer, null)));
+        }
+        json(404, request("GET", ORDERS + "/" + olderId, login("other-customer@example.test"), null));
+    }
+
+    @Test
+    void refundAppearsInHistoryAndDetailWhileStatusesStayCurrent() throws Exception {
+        String customer = login("customer@example.test");
+        JsonNode rejected = json(201, request("POST", ORDERS, customer, checkout("100.00", "APPROVED")));
+        JsonNode progressing = json(201, request("POST", ORDERS, customer, checkout("100.00", "APPROVED")));
+        String owner = login("restaurant_owner@example.test");
+        String rejectedId = rejected.get("id").asText();
+        String progressingId = progressing.get("id").asText();
+        assertEquals("PENDING", customerOrder(customer, progressingId).get("status").asText());
+        json(200, request("POST", "/api/owner/orders/" + rejectedId + "/reject", owner, null));
+        JsonNode detail = customerOrder(customer, rejectedId);
+        assertEquals("REJECTED", detail.get("status").asText());
+        assertEquals(0, new BigDecimal("100.00").compareTo(detail.get("refundedAmount").decimalValue()));
+        assertFalse(detail.get("refundedAt").isNull());
+        JsonNode history = json(200, request("GET", ORDERS, customer, null));
+        JsonNode listedRejection = history.get(0).get("id").asText().equals(rejectedId) ? history.get(0) : history.get(1);
+        assertEquals(detail, listedRejection);
+        json(200, request("POST", "/api/owner/orders/" + progressingId + "/accept", owner, null));
+        assertEquals("ACCEPTED", customerOrder(customer, progressingId).get("status").asText());
+        json(200, request("POST", "/api/owner/orders/" + progressingId + "/ready", owner, null));
+        assertEquals("READY_FOR_DELIVERY", customerOrder(customer, progressingId).get("status").asText());
+        for (Status status : List.of(Status.UNDER_DELIVERY, Status.DELIVERED)) {
+            emf.runInTransaction(em -> em.find(Order.class, UUID.fromString(progressingId)).setStatus(status));
+            assertEquals(status.name(), customerOrder(customer, progressingId).get("status").asText());
+            JsonNode current = json(200, request("GET", ORDERS, customer, null));
+            JsonNode listed = current.get(0).get("id").asText().equals(progressingId) ? current.get(0) : current.get(1);
+            assertEquals(status.name(), listed.get("status").asText());
+        }
+    }
+
+    private JsonNode customerOrder(String token, String orderId) throws Exception {
+        return json(200, request("GET", ORDERS + "/" + orderId, token, null));
     }
 
     private String checkout(String total, String paymentResult) throws Exception {
