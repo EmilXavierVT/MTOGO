@@ -21,6 +21,20 @@ jobs:
     permissions:
       contents: read
       issues: write
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: mtogo_courier_test
+          POSTGRES_USER: courier_test
+          POSTGRES_PASSWORD: courier_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U courier_test -d mtogo_courier_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -38,6 +52,7 @@ jobs:
       - name: Run the same checks as local verification
         env:
           MVNW_VERBOSE: 'true'
+          MTOGO_COURIER_TEST_JDBC_URL: jdbc:postgresql://localhost:5432/mtogo_courier_test
         run: ./scripts/check.sh verify
       - name: Save the verified release plan
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
