@@ -65,7 +65,7 @@ Database- og samtidighedsregler verificeres med relevante integrationstests mod 
 - Throughput: Antal færdige issues pr. uge. Vis proces-/mødeopgaver separat fra funktioner/tekniske leverancer, så et ekstra møde ikke ligner øget produktleverance.
 - WIP: Antal opgaver i In progress og Review, inklusive blokerede.
 
-Brug gh flow time --issue <nummer> til nuværende og samlet tid i In progress og Review, med [registrering af alle besøg](takt-workflow.md#issue-time). Brug boardets Start date og Done date til datoer, med issuehistorik/log til præcise tidspunkter. Target date er kun en prognose. Udfyld ikke faktiske datoer, cyklustider eller resultater på forhånd.
+Brug gh flow time --issue <nummer> til nuværende og samlet tid i In progress og Review, med [registrering af alle besøg](takt-workflow.md#issue-time). [Project Insights og Flow metrics-visningen](project-insights.md) viser faktisk start, afslutningsuge, cyklustid og registrerede aktive/review-intervaller. Flow started at har et præcist UTC-tidspunkt; Flow done er afslutningsdatoen i Europe/Copenhagen. Start source viser evidensen. Target date er kun en prognose. Ukendt historik forbliver tom; registrerede kalendertimer er ikke arbejdstimer.
 
 Hold et flow review på 30 minutter hver uge med fire deltagere (2 persontimer i alt). Gennemgå målinger, ældste aktive arbejde og blokeringer; vælg ét forbedringseksperiment og følg op på sidste uges eksperiment. Brug [skabelonen](flow-reviews/template.md) og link noten fra review-issuet. Mødedato og ansvarlig aftales af teamet.
 
