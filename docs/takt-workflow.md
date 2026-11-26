@@ -103,8 +103,8 @@ and image version tags remain evidence of integration, while a feature's enabled
 demonstration must satisfy its own acceptance criteria.
 
 The [runtime foundation](feature-flags-runtime.md) implements configuration, guards
-and the browser capability contract. Its production registry starts empty; the first
-product flag and its enabled demonstration belong to a separate issue.
+and the browser capability contract. [Customer feedback #60](customer-feedback.md) enrolls
+the first default-off product flag with its own business tests and enabled demonstration.
 
 ## Issue time
 

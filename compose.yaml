@@ -39,7 +39,7 @@ services:
       DB_PASSWORD: "${MTOGO_DB_PASSWORD:?Set MTOGO_DB_PASSWORD in .env}"
       CONNECTION_STR: jdbc:postgresql://db:5432/
       SECRET_KEY: "${MTOGO_SECRET_KEY:?Set MTOGO_SECRET_KEY in .env}"
-      # Explicitly forward product flags here after registration; see docs/feature-flags-runtime.md.
+      MTOGO_FEATURE_CUSTOMER_FEEDBACK: "${MTOGO_FEATURE_CUSTOMER_FEEDBACK:-false}"
       # The JPA setting overrides the app's development schema reset.
       JAVA_TOOL_OPTIONS: -Djakarta.persistence.schema-generation.database.action=update
     ports:

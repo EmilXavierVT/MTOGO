@@ -5,8 +5,9 @@ import java.util.Set;
 
 /** Registration is explicit; process environment values never enroll flags or public capabilities. */
 public record FeatureCatalog(Set<FeatureKey> registered, Map<String, FeatureKey> publicCapabilities) {
-    // The first product flag is deliberately deferred to its own issue.
-    public static final FeatureCatalog APPLICATION = new FeatureCatalog(Set.of(), Map.of());
+    public static final FeatureKey CUSTOMER_FEEDBACK = new FeatureKey("MTOGO_FEATURE_CUSTOMER_FEEDBACK");
+    public static final FeatureCatalog APPLICATION = new FeatureCatalog(
+            Set.of(CUSTOMER_FEEDBACK), Map.of("customerFeedback", CUSTOMER_FEEDBACK));
 
     public FeatureCatalog {
         registered = Set.copyOf(registered);

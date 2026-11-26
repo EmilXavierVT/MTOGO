@@ -111,13 +111,15 @@ class FeatureIntegrationTest {
     }
 
     @Test
-    void defaultApplicationExposesAnEmptyCatalogAndRequiresValidAuthentication() throws Exception {
-        app = App.createApp(emf, SECRET).start("127.0.0.1", 0);
+    void applicationExposesOnlyItsRegisteredProductCapabilityAndRequiresValidAuthentication() throws Exception {
+        app = App.createApp(emf, SECRET, FeatureCatalog.APPLICATION,
+                new EnvironmentFeatureFlags(FeatureCatalog.APPLICATION.registered(), name -> null, name -> fail()))
+                .start("127.0.0.1", 0);
         assertEquals(401, request("GET", "/api/features", null, null).statusCode());
         assertEquals(401, request("GET", "/api/features", "invalid", null).statusCode());
         HttpResponse<String> response = request("GET", "/api/features", login("customer@example.test"), null);
         assertEquals(200, response.statusCode());
-        assertEquals(mapper.createObjectNode(), mapper.readTree(response.body()));
+        assertEquals(mapper.valueToTree(Map.of("customerFeedback", false)), mapper.readTree(response.body()));
     }
 
     private String login(String email) throws Exception {

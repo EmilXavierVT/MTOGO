@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Check;
 
 import java.util.UUID;
 
@@ -14,6 +15,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name = "feedback")
+@Check(name = "ck_feedback_ratings", constraints = "foodRating between 1 and 5 "
+        + "and overAllExperienceRating between 1 and 5 and courierRating between 1 and 5")
 public class Feedback {
 
     @Id
@@ -29,7 +32,7 @@ public class Feedback {
     @Column(nullable = false)
     private int courierRating;
 
-    @OneToOne
-    @JoinColumn(nullable = false)
+    @OneToOne(optional = false)
+    @JoinColumn(name = "delivery_id", nullable = false, unique = true)
     private Delivery delivery;
 }

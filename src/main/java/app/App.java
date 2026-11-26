@@ -3,6 +3,7 @@ package app;
 import app.config.HibernateConfig;
 import app.controller.DeliveryController;
 import app.controller.FeatureController;
+import app.controller.FeedbackController;
 import app.controller.OwnerMenuController;
 import app.controller.OrderController;
 import app.controller.RestaurantController;
@@ -18,6 +19,7 @@ import app.security.SecurityController;
 import app.server.BackendMetrics;
 import app.server.Routing;
 import app.service.DeliveryService;
+import app.service.FeedbackService;
 import app.service.OrderService;
 import io.javalin.Javalin;
 import jakarta.persistence.EntityManagerFactory;
@@ -75,7 +77,8 @@ public class App {
         app.beforeMatched(security::authorize);
         Routing.registerRoutes(app, security, new OwnerMenuController(new OwnerMenuDao(emf)),
                 new RestaurantController(new RestaurantDao(emf)), new OrderController(new OrderService(emf)),
-                new DeliveryController(new DeliveryService(emf, new OrderDao())), new FeatureController(flags, catalog));
+                new DeliveryController(new DeliveryService(emf, new OrderDao())), new FeatureController(flags, catalog),
+                new FeedbackController(new FeedbackService(emf, flags)));
         return app;
     }
 }

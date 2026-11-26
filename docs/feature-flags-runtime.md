@@ -2,25 +2,26 @@
 
 Backend [#112](https://github.com/EmilXavierVT/MTOGO/issues/112) and
 frontend [#17](https://github.com/EmilXavierVT/MTOGO-Front/issues/17) implement the foundation
-from [research #111](feature-flags.md). **No product flag is registered yet, and no existing
-product route is gated.** Choosing the first product flag is separate work. The research's
+from [research #111](feature-flags.md). [Customer feedback #60](customer-feedback.md) enrolls
+the first product flag, `MTOGO_FEATURE_CUSTOMER_FEEDBACK`, default OFF, with the public key
+`customerFeedback`. Existing ordering and delivery operations remain available. The research's
 team-policy recommendations do not change the existing Definition of Done.
 
 ## Current contract
 
 `GET /api/features` requires the existing Bearer token and permits every existing role.
 It returns an explicitly public JSON object of Booleans with `Cache-Control: no-store`;
-the initial production response is `{}`. Missing/invalid authentication receives the
+the application response includes `{"customerFeedback":false}` by default. Missing/invalid authentication receives the
 existing `401` error. Raw environment names/values, credentials and internal flags are
 never projected into the response. The Next.js client fetches this at runtime after its
 role check; existing product UI does not wait for capability loading.
 
 `FeatureCatalog.APPLICATION` explicitly registers typed `FeatureKey` values and a separate
-public-name allowlist. Both collections are immutable and initially empty. Public names
+public-name allowlist. Both collections are immutable; customer feedback is explicitly registered. Public names
 must be lower camel case and refer to registered keys. Unknown process environment
 variables do not enroll or expose flags automatically. Keys are typed values rather
 than an empty enum, allowing isolated fixture definitions without a placeholder product
-flag. Future product issues should declare named constants in the central catalog.
+flag. Product issues declare named constants in the central catalog.
 
 `EnvironmentFeatureFlags` reads each registered variable exactly once when the app is
 created. Trimmed, case-insensitive `true` enables it; `false` disables it. Missing, blank
@@ -30,12 +31,12 @@ Changing configuration requires a new application/container instance.
 
 Inject `FeatureFlags` into a new service and call `flags.requireEnabled(key)` after
 independent authentication, role and persisted-resource ownership checks, before gated
-side effects. A disabled guard throws `ApiException(404, "Feature unavailable")`, rendered
+side effects. Customer feedback follows this pattern. A disabled guard throws `ApiException(404, "Feature unavailable")`, rendered
 through the existing error handler as `{"error":"Feature unavailable"}`. A true flag
 grants no permissions. Preserve the stable path for a replacement; an additive capability
-must guard all relevant backend operations. Existing product routes have no new guards.
+must guard all relevant backend operations. Existing order/delivery routes have no new guards.
 
-## Enrolling the first product flag
+## Enrolling another product flag
 
 1. Create linked feature issues and record an accountable owner, repository, issue,
    default-off value, public name if needed and removal condition. Follow Takt separately
@@ -60,8 +61,8 @@ must guard all relevant backend operations. Existing product routes have no new 
 
 ## Configuration changes and retirement
 
-There is no new production configuration to apply for the empty registry. Once a product
-flag exists, follow the [deployment runbook](deployment.md) with private backups and a
+Customer feedback's forwarding and pre-activation migration are documented in its
+[runbook](customer-feedback.md). Follow the [deployment runbook](deployment.md) with private backups and a
 recorded immutable image digest. Local Java runs also need explicitly supplied process
 variables; Java does not load Compose's `.env` file.
 
@@ -103,5 +104,5 @@ network/JSON failure, timeout, token/route changes, obsolete requests, cancellat
 session expiry. New capabilities fail closed while existing content remains available;
 an actual 401 clears both session stores, removes private content and returns to login.
 
-The first product issue must add its own business on/off tests and same-image container
-recreation demonstration. The foundation does not claim that a product rollout has happened.
+Each product issue adds its own business on/off tests and same-image container recreation
+demonstration. See [customer feedback](customer-feedback.md) for the first integration.

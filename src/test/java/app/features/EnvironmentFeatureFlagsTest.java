@@ -64,8 +64,9 @@ class EnvironmentFeatureFlagsTest {
         FeatureCatalog catalog = new FeatureCatalog(Set.of(TEST), source);
         source.clear();
         assertEquals(Map.of("test", TEST), catalog.publicCapabilities());
-        assertTrue(FeatureCatalog.APPLICATION.registered().isEmpty());
-        assertTrue(FeatureCatalog.APPLICATION.publicCapabilities().isEmpty());
+        assertEquals(Set.of(FeatureCatalog.CUSTOMER_FEEDBACK), FeatureCatalog.APPLICATION.registered());
+        assertEquals(Map.of("customerFeedback", FeatureCatalog.CUSTOMER_FEEDBACK),
+                FeatureCatalog.APPLICATION.publicCapabilities());
     }
 
     @Test

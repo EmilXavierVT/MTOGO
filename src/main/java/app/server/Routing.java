@@ -2,6 +2,7 @@ package app.server;
 
 import app.controller.DeliveryController;
 import app.controller.FeatureController;
+import app.controller.FeedbackController;
 import app.controller.OrderController;
 import app.controller.OwnerMenuController;
 import app.controller.RestaurantController;
@@ -15,7 +16,7 @@ public final class Routing {
 
     public static void registerRoutes(Javalin app, SecurityController security, OwnerMenuController ownerMenus,
                                       RestaurantController restaurant, OrderController orders, DeliveryController deliveries,
-                                      FeatureController features) {
+                                      FeatureController features, FeedbackController feedback) {
         SystemController.addRoutes(app);
         app.post("/api/auth/login", security::login);
         app.post("/api/auth/register", security::register);
@@ -29,6 +30,8 @@ public final class Routing {
         app.post("/api/customer/orders", orders :: handleCheckout, Role.CUSTOMER);
         app.get("/api/customer/orders", orders::listCustomerOrders, Role.CUSTOMER);
         app.get("/api/customer/orders/{orderId}", orders::showConfirmation, Role.CUSTOMER);
+        app.get("/api/customer/orders/{orderId}/feedback", feedback::show, Role.CUSTOMER);
+        app.post("/api/customer/orders/{orderId}/feedback", feedback::submit, Role.CUSTOMER);
         app.post("/api/owner/orders/{orderId}/accept", orders::acceptRestaurantOrder, Role.RESTAURANT_OWNER);
         app.post("/api/owner/orders/{orderId}/reject", orders::rejectRestaurantOrder, Role.RESTAURANT_OWNER);
         app.post("/api/owner/orders/{orderId}/ready", orders::readyRestaurantOrder, Role.RESTAURANT_OWNER);
