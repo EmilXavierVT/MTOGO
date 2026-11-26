@@ -29,6 +29,8 @@ public final class Routing {
         app.post("/api/owner/orders/{orderId}/accept", orders::acceptRestaurantOrder, Role.RESTAURANT_OWNER);
         app.post("/api/owner/orders/{orderId}/reject", orders::rejectRestaurantOrder, Role.RESTAURANT_OWNER);
         app.post("/api/owner/orders/{orderId}/ready", orders::readyRestaurantOrder, Role.RESTAURANT_OWNER);
+        app.get("/api/courier/orders/available", deliveries::listAvailableOrders, Role.COURIER);
+        app.get("/api/courier/delivery/active", deliveries::showActiveDelivery, Role.COURIER);
         app.post("/api/courier/orders/{orderId}/delivery/accept", deliveries::handleDeliveryAccept, Role.COURIER);
         app.post("/api/courier/orders/{orderId}/delivery/pickup", deliveries::handlePickupDelivery, Role.COURIER);
         app.post("/api/courier/orders/{orderId}/delivery/delivered", deliveries::handleDelivered, Role.COURIER);

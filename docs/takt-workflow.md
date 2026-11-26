@@ -14,11 +14,15 @@ frontend implementation: [MTOGO-Front #9](https://github.com/EmilXavierVT/MTOGO-
 
 ## Check locally
 
-Use Java 17 for the backend, Node 24 for the frontend, and Python 3.9+ for the
+Use Java 17 for the backend, Node 24 for the frontend, and Python 3.11+ for the
 delivery tools. Maven Wrapper pins Maven 3.9.16. On macOS the check script selects
 Java 17 with java_home; on Linux/WSL set JAVA_HOME or put Java 17 on PATH.
 On Windows, run the shell tools inside WSL. Install gh, Git and the runtime inside
 that same environment.
+
+The Python minimum comes from the pinned
+[gh-tt extension](https://github.com/devx-cafe/gh-tt/blob/84b3b74a79dd4907812cb02e59b2b048ce6e4c3e/pyproject.toml#L5).
+Check `python3 --version` before running `./scripts/setup-local.sh`.
 
 In the frontend, select Node 24 (nvm use) and run npm ci once. Repeat npm ci after
 package-lock.json changes, not before every check.
@@ -87,6 +91,16 @@ and deliver again when ready.
 After success, unchanged branches are deleted using expected-SHA leases and the
 issue is closed. Newer shared-branch work is preserved. Issue closure moves the card
 to Done when the project's closed-item workflow is configured.
+
+### Feature flags research
+
+[Issue #111's research note](feature-flags.md) recommends application-owned Boolean
+release flags and describes a proposed implementation and team lifecycle. The note
+specifies follow-up work; runtime flag support and the proposed team policies are
+not introduced by the research delivery. `TAKT_ENABLED` controls delivery automation;
+the proposed application flags control runtime feature availability. Takt delivery
+and image version tags remain evidence of integration, while a feature's enabled
+demonstration must satisfy its own acceptance criteria.
 
 ## Issue time
 
